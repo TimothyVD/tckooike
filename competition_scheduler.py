@@ -1900,7 +1900,7 @@ function refreshAll() {
    ═══════════════════════════════════════════════════════ */
 async function init() {
   document.getElementById('js-title').textContent = DATA.club_name;
-  document.title = DATA.club_name + ' — ' + DATA.season;
+  document.title = DATA.club_name;
   loadLocal();
   buildNav();
   buildAllPanels();
