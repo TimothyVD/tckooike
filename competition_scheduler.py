@@ -1012,6 +1012,10 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TC Kooike</title>
   <link rel="icon" type="image/png" href="images/logo.png">
+  <meta property="og:title" content="TC Kooike">
+  <meta property="og:description" content="Welkom bij TC Kooike — jouw tennisclub in de regio.">
+  <meta property="og:image" content="images/logo.png">
+  <meta property="og:type" content="website">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -1201,7 +1205,7 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
 <header class="site-header">
   <img src="images/logo.png" alt="TC Kooike" style="height:80px;width:80px;object-fit:contain;border-radius:50%;background:#fff;padding:3px;flex-shrink:0">
   <div class="hdr-text">
-    <h1 id="js-title">Competition Schedule</h1>
+    <h1 id="js-title">TC Kooike</h1>
   </div>
   <div class="hdr-actions">
     <a href="https://www.tennisenpadelvlaanderen.be/nl/clubdashboard/lid-worden?clubId=2158" target="_blank" class="btn btn-ghost" title="Lid worden bij TC Kooike">
