@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Competition Schedule</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --clay: #C1440E; --clay-dark: #8B2500; --clay-light: #E8896A;
+      --clay-bg: #FBE9E7; --bg: #F9F5F3; --card: #FFFFFF;
+      --border: #DDD0CA; --text: #2C1810; --text-muted: #7D5A50;
+      --win: #2E7D32; --win-bg: #E8F5E9;
+      --loss: #C62828; --loss-bg: #FFEBEE;
+      --draw-color: #E65100; --draw-bg: #FFF3E0;
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); }
+    a { color: var(--clay); text-decoration: none; }
+    /* ── Header ── */
+    .site-header {
+      background: var(--clay); color: #fff;
+      padding: 0 24px; height: 92px;
+      display: flex; align-items: center; gap: 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.25);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .hdr-logo { font-size: 2rem; line-height: 1; flex-shrink: 0; }
+    .hdr-text { flex: 1; min-width: 0; }
+    .hdr-text h1 { font-size: 1.3rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .hdr-text .sub { font-size: .82rem; opacity: .85; margin-top: 2px; }
+    .hdr-actions { display: flex; gap: 8px; flex-shrink: 0; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 7px 13px; border-radius: 6px; border: none;
+      cursor: pointer; font-size: .84rem; font-weight: 600;
+      transition: background .15s;
+    }
+    .btn-ghost { background: rgba(255,255,255,.15); color: #fff; }
+    .btn-ghost:hover { background: rgba(255,255,255,.3); }
+    /* ── Tab nav ── */
+    .tab-nav {
+      position: sticky; top: 92px; z-index: 90;
+      background: var(--card); border-bottom: 2px solid var(--border);
+      padding: 0 24px; display: flex; gap: 2px;
+      overflow-x: auto; scrollbar-width: none;
+    }
+    .tab-nav::-webkit-scrollbar { display: none; }
+    .tab-btn {
+      padding: 10px 18px; border: none; background: none;
+      cursor: pointer; font-size: .88rem; font-weight: 500;
+      color: var(--text-muted); border-bottom: 3px solid transparent;
+      white-space: nowrap; transition: color .15s, border-color .15s;
+    }
+    .tab-btn:hover { color: var(--clay); }
+    .tab-btn.active { color: var(--clay); border-bottom-color: var(--clay); font-weight: 700; }
+    /* ── Content ── */
+    .main { max-width: 1100px; margin: 0 auto; padding: 24px 20px; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+    /* ── Card ── */
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 18px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.07); }
+    .card-head {
+      background: var(--clay); color: #fff;
+      padding: 11px 18px; font-weight: 700; font-size: .95rem;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .card-head.collapsible { cursor: pointer; user-select: none; }
+    .toggle-icon { transition: transform .2s; }
+    .card-head.collapsed .toggle-icon { transform: rotate(-90deg); }
+    .card-body { padding: 16px 18px; }
+    .card-body.hidden { display: none; }
+    /* ── Tables ── */
+    .tbl-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+    thead th { background: var(--clay); color: #fff; padding: 9px 12px; text-align: left; font-weight: 600; white-space: nowrap; }
+    tbody tr:nth-child(even):not(.date-row) { background: var(--clay-bg); }
+    tbody tr:hover:not(.date-row) { background: #eeddd7; }
+    td { padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    .date-row td { background: #F2E0D9 !important; color: var(--clay-dark); font-weight: 700; padding: 5px 12px !important; font-size: .8rem; letter-spacing: .03em; }
+    /* ── Score inputs ── */
+    .score-wrap { display: flex; align-items: center; gap: 5px; }
+    .score-in {
+      width: 44px; height: 30px;
+      border: 1.5px solid var(--border); border-radius: 5px;
+      text-align: center; font-size: .95rem; font-weight: 600;
+      background: #fff; transition: border-color .15s;
+    }
+    .score-in:focus { outline: none; border-color: var(--clay); box-shadow: 0 0 0 2px var(--clay-bg); }
+    .score-sep { font-weight: 700; color: var(--text-muted); }
+    /* Win highlighting on table rows */
+    tr.winner-a .score-in[data-side="a"] { color: var(--win); border-color: var(--win); }
+    tr.winner-a .score-in[data-side="b"] { color: var(--text-muted); }
+    tr.winner-b .score-in[data-side="b"] { color: var(--win); border-color: var(--win); }
+    tr.winner-b .score-in[data-side="a"] { color: var(--text-muted); }
+    /* ── Badges ── */
+    .badge { display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: .78rem; font-weight: 700; }
+    .badge-w { background: var(--win-bg); color: var(--win); }
+    .badge-l { background: var(--loss-bg); color: var(--loss); }
+    .badge-d { background: var(--draw-bg); color: var(--draw-color); }
+    .badge-n { background: #f0f0f0; color: #bbb; font-weight: 400; }
+    /* ── Standings ── */
+    .s-wrap thead th { text-align: center; }
+    .s-wrap thead th:first-child, .s-wrap thead th:nth-child(2) { text-align: left; }
+    .s-wrap td { text-align: center; }
+    .s-wrap td:first-child, .s-wrap td:nth-child(2) { text-align: left; }
+    .s-rank { font-weight: 600; color: var(--text-muted); }
+    .s-name { font-weight: 600; }
+    .s-pts { font-weight: 700; color: var(--clay-dark); }
+    .s-empty { color: var(--text-muted); font-style: italic; padding: 18px 0; text-align: center; }
+    /* ── Teams grid ── */
+    .teams-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+    .team-card { border: 1px solid var(--border); border-radius: 8px; padding: 13px 15px; }
+    .tc-name { font-weight: 700; color: var(--clay-dark); margin-bottom: 6px; }
+    .tc-detail { font-size: .82rem; color: var(--text-muted); line-height: 1.8; }
+    /* ── Info chips ── */
+    .chips { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+    .chip { background: var(--clay-bg); border: 1px solid var(--clay-light); border-radius: 20px; padding: 4px 13px; font-size: .82rem; color: var(--clay-dark); font-weight: 500; }
+    /* ── Toast ── */
+    .toast {
+      position: fixed; bottom: 20px; right: 20px; z-index: 999;
+      background: #323232; color: #fff;
+      padding: 11px 18px; border-radius: 8px; font-size: .88rem; font-weight: 500;
+      box-shadow: 0 4px 14px rgba(0,0,0,.3);
+      opacity: 0; transition: opacity .3s; pointer-events: none;
+    }
+    .toast.show { opacity: 1; }
+    /* ── Help text ── */
+    .help { font-size: .8rem; color: var(--text-muted); margin-top: 8px; }
+    /* ── Nav separator & group labels ── */
+    .tab-nav { align-items: center; }
+    .tab-sep { width: 1px; height: 26px; background: var(--border); margin: 0 6px; flex-shrink: 0; }
+    /* ── Static info sections ── */
+    .info-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin-bottom: 16px; }
+    .info-card { border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; background: var(--card); }
+    .info-card h3 { color: var(--clay-dark); font-size: .95rem; margin-bottom: 8px; }
+    .info-card p, .info-card li { font-size: .85rem; color: var(--text-muted); line-height: 1.7; }
+    .kal-grid { display: flex; flex-direction: column; gap: 8px; }
+    .kal-item { display: flex; gap: 14px; align-items: flex-start; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--card); }
+    .kal-date { min-width: 145px; font-size: .82rem; font-weight: 700; color: var(--clay-dark); padding-top: 2px; }
+    .kal-desc { font-size: .88rem; color: var(--text); flex: 1; }
+    .kal-desc small { display: block; color: var(--text-muted); font-size: .78rem; margin-top: 2px; }
+    .sponsor-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+    .sponsor-pill { padding: 8px 16px; border: 1.5px solid var(--clay-light); border-radius: 24px; font-size: .85rem; font-weight: 500; color: var(--clay-dark); text-decoration: none; background: var(--clay-bg); transition: background .15s, color .15s; }
+    .sponsor-pill:hover { background: var(--clay); color: #fff; }
+    .contact-block { font-size: .9rem; line-height: 2; }
+    .contact-block a { color: var(--clay); }
+    table.school-tbl { font-size: .85rem; }
+    table.school-tbl td { padding: 7px 11px; }
+    table.school-tbl td:last-child { font-weight: 700; color: var(--clay-dark); text-align: right; white-space: nowrap; }
+    .faq-list { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+    .faq-list li { padding: 11px 14px; background: var(--clay-bg); border-radius: 8px; font-size: .86rem; line-height: 1.6; }
+    .faq-list li strong { color: var(--clay-dark); display: block; margin-bottom: 3px; font-size: .88rem; }
+    .cta-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--clay); color: #fff !important; padding: 10px 20px; border-radius: 7px; font-size: .9rem; font-weight: 600; margin-top: 16px; text-decoration: none; transition: background .15s; }
+    .cta-btn:hover { background: var(--clay-dark); }
+    /* ── Images ── */
+    .hero-img { width: 100%; max-height: 280px; object-fit: cover; border-radius: 10px; margin-bottom: 16px; display: block; }
+    .hero-img-sm { width: 100%; max-height: 180px; object-fit: cover; border-radius: 8px; margin-bottom: 12px; display: block; }
+    .board-photo { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid var(--clay-light); flex-shrink: 0; }
+    .board-initials { display: flex; align-items: center; justify-content: center; background: var(--clay); color: #fff; font-weight: 700; font-size: 1.2rem; letter-spacing: .03em; }
+    .board-card { display: flex; align-items: center; gap: 14px; border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; background: var(--card); }
+    .board-info { flex: 1; min-width: 0; }
+    .board-name { font-weight: 700; color: var(--clay-dark); margin-bottom: 3px; }
+    .board-role { font-size: .82rem; color: var(--text-muted); line-height: 1.5; }
+    .board-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+    .photo-gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+    .photo-gallery img { width: 100%; height: 240px; object-fit: cover; object-position: center top; border-radius: 7px; cursor: pointer; transition: opacity .15s; }
+    .photo-gallery img:hover { opacity: .88; }
+    /* .sponsor-logo-grid overridden below by 3-per-row grid rule */
+    .sponsor-logo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 16px; }
+    .sponsor-logo-grid a { display: flex; align-items: center; justify-content: center; padding: 0; border: 1px solid var(--border); border-radius: 8px; background: #fff; transition: box-shadow .15s; height: 160px; box-sizing: border-box; overflow: hidden; }
+    .sponsor-logo-grid a:hover { box-shadow: 0 0 0 2px var(--clay-light); }
+    .sponsor-logo-grid img { width: 100%; height: 100%; object-fit: contain; display: block; }
+    @media (max-width: 480px) { .sponsor-logo-grid { grid-template-columns: repeat(2, 1fr); } }
+    .ladder-img { width: 100%; max-width: 340px; display: block; margin: 0 auto 16px; }
+    .whackit-logo { height: 220px; object-fit: contain; margin-bottom: 14px; display: block; }
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      .hdr-text h1 { font-size: 1.05rem; }
+      .btn-label { display: none; }
+      .tab-btn { padding: 10px 11px; font-size: .8rem; }
+      .main { padding: 14px 10px; }
+      .kal-date { min-width: 100px; }
+    }
+    @media print {
+      .site-header, .tab-nav { display: none !important; }
+      .tab-panel { display: block !important; }
+      .card { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="site-header">
+  <img src="images/logo.png" alt="TC Kooike" style="height:80px;width:80px;object-fit:contain;border-radius:50%;background:#fff;padding:3px;flex-shrink:0">
+  <div class="hdr-text">
+    <h1 id="js-title">Competition Schedule</h1>
+    <div class="sub" id="js-sub"></div>
+  </div>
+  <div class="hdr-actions">
+    <a href="https://www.tennisenpadelvlaanderen.be/nl/clubdashboard/lid-worden?clubId=2158" target="_blank" class="btn btn-ghost" title="Lid worden bij TC Kooike">
+      <span>🎾</span><span class="btn-label">Lid worden? Schrijf je hier in.</span>
+    </a>
+    <button class="btn btn-ghost" id="btn-import-trigger" title="Import scores from JSON file" style="display:none">
+      <span>📥</span><span class="btn-label">Import</span>
+    </button>
+    <button class="btn btn-ghost" id="btn-export" title="Export scores to JSON file" style="display:none">
+      <span>📤</span><span class="btn-label">Export</span>
+    </button>
+  </div>
+  <input type="file" id="file-import" accept=".json" style="display:none">
+</header>
+
+<nav class="tab-nav" id="tab-nav"></nav>
+<main class="main" id="main-content"></main>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   Schedule data — embedded at generation time
+   ═══════════════════════════════════════════════════════ */
+const DATA = {"club_name": "TC Kooike", "season": "Seizoen 2026", "generated": "2026-04-01", "poules": ["A", "B"], "teams_by_poule": {"A": [{"name": "Alice D. & Bob M.", "player_1": "Alice Dupont", "player_2": "Bob Martin", "tel_1": "+32 470 11 22 33", "tel_2": "+32 471 44 55 66"}, {"name": "Carol L. & David P.", "player_1": "Carol Leroy", "player_2": "David Petit", "tel_1": "+32 472 77 88 99", "tel_2": "+32 473 00 11 22"}, {"name": "Eve B. & Frank T.", "player_1": "Eve Bernard", "player_2": "Frank Thomas", "tel_1": "+32 474 33 44 55", "tel_2": "+32 475 66 77 88"}], "B": [{"name": "Grace S. & Hugo L.", "player_1": "Grace Simon", "player_2": "Hugo Laurent", "tel_1": "+32 476 99 00 11", "tel_2": "+32 477 22 33 44"}, {"name": "Iris M. & Jack D.", "player_1": "Iris Moreau", "player_2": "Jack Dubois", "tel_1": "+32 478 55 66 77", "tel_2": "+32 479 88 99 00"}, {"name": "Karen M. & Leo G.", "player_1": "Karen Michel", "player_2": "Leo Garcia", "tel_1": "+32 480 11 22 33", "tel_2": "+32 481 44 55 66"}]}, "matches": [{"id": "2026-05-04_21:00_Alice_D__and_Bob_M__Carol_L__and_David_P_", "poule": "A", "date": "2026-05-04", "time": "21:00", "terrain": "T1", "team_a": "Alice D. & Bob M.", "team_b": "Carol L. & David P."}, {"id": "2026-05-11_18:00_Alice_D__and_Bob_M__Eve_B__and_Frank_T_", "poule": "A", "date": "2026-05-11", "time": "18:00", "terrain": "T4", "team_a": "Alice D. & Bob M.", "team_b": "Eve B. & Frank T."}, {"id": "2026-05-18_18:00_Carol_L__and_David_P__Eve_B__and_Frank_T_", "poule": "A", "date": "2026-05-18", "time": "18:00", "terrain": "T3", "team_a": "Carol L. & David P.", "team_b": "Eve B. & Frank T."}, {"id": "2026-05-04_21:00_Grace_S__and_Hugo_L__Iris_M__and_Jack_D_", "poule": "B", "date": "2026-05-04", "time": "21:00", "terrain": "T2", "team_a": "Grace S. & Hugo L.", "team_b": "Iris M. & Jack D."}, {"id": "2026-05-11_19:30_Grace_S__and_Hugo_L__Karen_M__and_Leo_G_", "poule": "B", "date": "2026-05-11", "time": "19:30", "terrain": "T4", "team_a": "Grace S. & Hugo L.", "team_b": "Karen M. & Leo G."}, {"id": "2026-05-18_18:00_Iris_M__and_Jack_D__Karen_M__and_Leo_G_", "poule": "B", "date": "2026-05-18", "time": "18:00", "terrain": "T1", "team_a": "Iris M. & Jack D.", "team_b": "Karen M. & Leo G."}]};
+
+const STORAGE_KEY = ('cs_scores__' + DATA.club_name + '__' + DATA.season)
+  .replace(/[^\w]/g, '_');
+
+/* ── State ── */
+let scores = {};   // { matchId: { a: number|null, b: number|null } }
+
+/* ═══════════════════════════════════════════════════════
+   Toast
+   ═══════════════════════════════════════════════════════ */
+let _tTimer;
+function toastMsg(msg, dur = 2500) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(_tTimer);
+  _tTimer = setTimeout(() => el.classList.remove('show'), dur);
+}
+
+/* ═══════════════════════════════════════════════════════
+   Persistence — localStorage + optional scores.json fetch
+   ═══════════════════════════════════════════════════════ */
+function loadLocal() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) scores = JSON.parse(raw);
+  } catch (_) {}
+}
+function saveLocal() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(scores)); } catch (_) {}
+}
+async function fetchServerScores() {
+  /* If scores.json is committed next to this HTML in GitHub Pages,
+     it is loaded as the baseline; local edits always take precedence. */
+  try {
+    const r = await fetch('./scores.json', { cache: 'no-cache' });
+    if (!r.ok) return;
+    const srv = await r.json();
+    if (srv && typeof srv === 'object') {
+      scores = Object.assign({}, srv, scores);  // local wins on conflict
+      saveLocal();
+    }
+  } catch (_) {}   /* file absent → silent */
+}
+
+/* ═══════════════════════════════════════════════════════
+   Export / Import
+   ═══════════════════════════════════════════════════════ */
+function exportScores() {
+  const blob = new Blob([JSON.stringify(scores, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'scores.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toastMsg('Exported scores.json — commit it to GitHub Pages to share results!');
+}
+function importScores(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      Object.assign(scores, data);
+      saveLocal();
+      refreshAll();
+      toastMsg('Imported scores for ' + Object.keys(data).length + ' matches');
+    } catch (_) {
+      toastMsg('Could not parse file — expected a scores.json');
+    }
+  };
+  reader.readAsText(file);
+}
+
+/* ═══════════════════════════════════════════════════════
+   Score helpers
+   ═══════════════════════════════════════════════════════ */
+function getScore(id) { return scores[id] || { a: null, b: null }; }
+function setScore(id, side, raw) {
+  if (!scores[id]) scores[id] = { a: null, b: null };
+  scores[id][side] = (raw === '' || raw == null) ? null : Number(raw);
+  saveLocal();
+}
+function resultForA(id) {
+  const s = getScore(id);
+  if (s.a === null || s.b === null) return null;
+  if (s.a > s.b) return 'w';
+  if (s.a < s.b) return 'l';
+  return 'd';
+}
+
+/* ═══════════════════════════════════════════════════════
+   Standings
+   ═══════════════════════════════════════════════════════ */
+function computeStandings(poule) {
+  const ms = DATA.matches.filter(m => m.poule === poule);
+  const st = {};
+  for (const t of (DATA.teams_by_poule[poule] || [])) {
+    st[t.name] = { p: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 };
+  }
+  for (const m of ms) {
+    const s = getScore(m.id);
+    if (s.a === null || s.b === null) continue;
+    if (!st[m.team_a]) st[m.team_a] = { p:0, w:0, d:0, l:0, gf:0, ga:0, pts:0 };
+    if (!st[m.team_b]) st[m.team_b] = { p:0, w:0, d:0, l:0, gf:0, ga:0, pts:0 };
+    st[m.team_a].p++; st[m.team_b].p++;
+    st[m.team_a].gf += s.a; st[m.team_a].ga += s.b;
+    st[m.team_b].gf += s.b; st[m.team_b].ga += s.a;
+    if (s.a > s.b) {
+      st[m.team_a].w++; st[m.team_a].pts += 2; st[m.team_b].l++;
+    } else if (s.b > s.a) {
+      st[m.team_b].w++; st[m.team_b].pts += 2; st[m.team_a].l++;
+    } else {
+      st[m.team_a].d++; st[m.team_a].pts++;
+      st[m.team_b].d++; st[m.team_b].pts++;
+    }
+  }
+  return Object.entries(st)
+    .map(([name, s]) => ({ name, ...s }))
+    .sort((a, b) => b.pts - a.pts || b.w - a.w || (b.gf - b.ga) - (a.gf - a.ga));
+}
+
+/* ═══════════════════════════════════════════════════════
+   HTML helpers
+   ═══════════════════════════════════════════════════════ */
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = String(s == null ? '' : s);
+  return d.innerHTML;
+}
+function fmtDate(ds) {
+  try {
+    return new Date(ds + 'T00:00:00').toLocaleDateString(undefined,
+      { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  } catch (_) { return ds; }
+}
+function badgeHtml(res) {
+  if (!res) return '<span class="badge badge-n">–</span>';
+  if (res === 'w') return '<span class="badge badge-w">W</span>';
+  if (res === 'l') return '<span class="badge badge-l">L</span>';
+  return '<span class="badge badge-d">D</span>';
+}
+function rankSymbol(i) { return ['🥇','🥈','🥉'][i] || String(i + 1); }
+
+/* ═══════════════════════════════════════════════════════
+   Build UI
+   ═══════════════════════════════════════════════════════ */
+const STATIC_TABS = [
+  { id: 'welkom',   label: '🏠 Welkom' },
+  { id: 'kalender', label: '📅 Kalender' },
+  { id: 'bestuur',  label: '👥 Bestuur' },
+  { id: 'sfeer',    label: '📸 Sfeerbeelden' },
+  { id: 'school',   label: '🎾 Tennisschool' },
+  { id: 'ladder',   label: '🪜 Laddercompetitie' },
+  { id: 'sponsors', label: '🤝 Sponsors' },
+  { id: 'contact',  label: '📞 Contact' },
+];
+function buildNav() {
+  const nav = document.getElementById('tab-nav');
+  let html = STATIC_TABS.map((t, i) =>
+    '<button class="tab-btn' + (i === 0 ? ' active' : '') + '" data-tab="' + t.id + '">' + esc(t.label) + '</button>'
+  ).join('');
+  nav.innerHTML = html;
+  nav.addEventListener('click', e => {
+    const btn = e.target.closest('.tab-btn');
+    if (!btn) return;
+    nav.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    switchTab(btn.dataset.tab);
+  });
+}
+function switchTab(id) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  const el = document.getElementById('tp-' + id);
+  if (el) el.classList.add('active');
+}
+function buildAllPanels() {
+  const root = document.getElementById('main-content');
+  let html = '<div class="tab-panel" id="tp-overview">' + buildOverview() + '</div>';
+  for (const p of DATA.poules) {
+    html += '<div class="tab-panel" id="tp-p-' + esc(p) + '">' + buildPoule(p) + '</div>';
+  }
+  for (const t of STATIC_TABS) {
+    html += '<div class="tab-panel" id="tp-' + esc(t.id) + '">' + buildStaticPanel(t.id) + '</div>';
+  }
+  root.innerHTML = html;
+  switchTab(STATIC_TABS[0].id);
+  root.querySelectorAll('.score-in').forEach(inp => inp.addEventListener('change', onScoreChange));
+}
+
+/* ── Overview panel ── */
+function buildOverview() {
+  const multi = DATA.poules.length > 1;
+  const sorted = [...DATA.matches].sort((a, b) =>
+    a.date !== b.date ? a.date.localeCompare(b.date) :
+    a.time !== b.time ? a.time.localeCompare(b.time) :
+    String(a.terrain).localeCompare(String(b.terrain))
+  );
+  let rows = '', last = null;
+  for (const m of sorted) {
+    if (m.date !== last) {
+      last = m.date;
+      rows += '<tr class="date-row"><td colspan="' + (multi ? 7 : 6) + '">' + esc(fmtDate(m.date)) + '</td></tr>';
+    }
+    const s = getScore(m.id);
+    const va = s.a !== null ? s.a : '', vb = s.b !== null ? s.b : '';
+    const res = resultForA(m.id);
+    const tr = res === 'w' ? 'winner-a' : res === 'l' ? 'winner-b' : '';
+    const pCell = multi ? '<td>' + esc(m.poule) + '</td>' : '';
+    rows += '<tr class="' + tr + '" data-match-row="' + esc(m.id) + '">' +
+      pCell +
+      '<td>' + esc(m.time) + '</td>' +
+      '<td>' + esc(m.terrain) + '</td>' +
+      '<td><strong>' + esc(m.team_a) + '</strong></td>' +
+      '<td><div class="score-wrap">' +
+        '<input class="score-in" type="number" min="0" max="99" data-match="' + esc(m.id) + '" data-side="a" value="' + va + '" placeholder="—">' +
+        '<span class="score-sep">–</span>' +
+        '<input class="score-in" type="number" min="0" max="99" data-match="' + esc(m.id) + '" data-side="b" value="' + vb + '" placeholder="—">' +
+      '</div></td>' +
+      '<td><strong>' + esc(m.team_b) + '</strong></td>' +
+    '</tr>';
+  }
+  const pHead = multi ? '<th>Poule</th>' : '';
+  const nDone = DATA.matches.filter(m => { const s = getScore(m.id); return s.a !== null && s.b !== null; }).length;
+  return '<div class="chips">' +
+    '<span class="chip">🎾 ' + DATA.matches.length + ' matches total</span>' +
+    '<span class="chip" id="chip-done">✅ ' + nDone + ' results entered</span>' +
+    '<span class="chip">📅 Generated: ' + esc(DATA.generated) + '</span>' +
+    '</div>' +
+    '<div class="card">' +
+      '<div class="card-head">📋 All Matches — ' + esc(DATA.season) + '</div>' +
+      '<div class="tbl-wrap"><table>' +
+        '<thead><tr>' + pHead + '<th>Time</th><th>Terrain</th><th>Team A</th><th>Score</th><th>Team B</th></tr></thead>' +
+        '<tbody>' + rows + '</tbody>' +
+      '</table></div>' +
+    '</div>' +
+    '<p class="help">Scores entered here are saved automatically in your browser. ' +
+    'Use <strong>Export</strong> to download <code>scores.json</code> and commit it ' +
+    'to your GitHub Pages repository so that everyone sees the latest results.</p>';
+}
+
+/* ── Poule panel ── */
+function buildPoule(poule) {
+  const teams = DATA.teams_by_poule[poule] || [];
+  const ms = DATA.matches.filter(m => m.poule === poule);
+  const total = teams.length * (teams.length - 1) / 2;
+  return '<div class="chips">' +
+    '<span class="chip">👥 ' + teams.length + ' teams</span>' +
+    '<span class="chip">🎾 ' + ms.length + ' / ' + total + ' matches scheduled</span>' +
+    '</div>' +
+    buildStandingsCard(poule) +
+    buildTeamsCard(poule, teams) +
+    buildMatchCard(poule, ms);
+}
+
+/* ── Standings card ── */
+function buildStandingsCard(poule) {
+  return '<div class="card">' +
+    '<div class="card-head">🏆 Standings — Poule ' + esc(poule) + '</div>' +
+    '<div class="card-body" id="standings-' + esc(poule) + '">' + renderStandings(poule) + '</div>' +
+    '</div>';
+}
+function renderStandings(poule) {
+  const rows = computeStandings(poule);
+  if (rows.every(r => r.p === 0)) {
+    return '<p class="s-empty">No results entered yet — add scores in the match schedule below.</p>';
+  }
+  const trs = rows.map((r, i) =>
+    '<tr>' +
+      '<td class="s-rank">' + rankSymbol(i) + '</td>' +
+      '<td class="s-name">' + esc(r.name) + '</td>' +
+      '<td>' + r.p + '</td><td>' + r.w + '</td><td>' + r.d + '</td><td>' + r.l + '</td>' +
+      '<td class="s-pts">' + r.pts + '</td>' +
+    '</tr>'
+  ).join('');
+  return '<div class="s-wrap tbl-wrap"><table>' +
+    '<thead><tr><th>#</th><th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>Pts</th></tr></thead>' +
+    '<tbody>' + trs + '</tbody>' +
+    '</table></div>' +
+    '<p class="help" style="padding-top:8px">Points: W = 2 &nbsp;·&nbsp; D = 1 &nbsp;·&nbsp; L = 0</p>';
+}
+
+/* ── Teams card ── */
+function buildTeamsCard(poule, teams) {
+  const withDetails = teams.some(t => t.player_1 || t.player_2);
+  if (!withDetails) return '';
+  const cards = teams.map(t =>
+    '<div class="team-card">' +
+      '<div class="tc-name">' + esc(t.name) + '</div>' +
+      '<div class="tc-detail">' +
+        (t.player_1 ? '👤 ' + esc(t.player_1) + (t.tel_1 ? ' · <a href="tel:' + esc(t.tel_1) + '">' + esc(t.tel_1) + '</a>' : '') + '<br>' : '') +
+        (t.player_2 ? '👤 ' + esc(t.player_2) + (t.tel_2 ? ' · <a href="tel:' + esc(t.tel_2) + '">' + esc(t.tel_2) + '</a>' : '') : '') +
+      '</div>' +
+    '</div>'
+  ).join('');
+  const cbId = 'cb-' + poule;
+  const chId = 'ch-' + poule;
+  return '<div class="card">' +
+    '<div class="card-head collapsible" id="' + chId + '" onclick="toggleCard(\'' + cbId + '\', this)">' +
+      '👥 Players — Poule ' + esc(poule) + ' <span class="toggle-icon">▾</span>' +
+    '</div>' +
+    '<div class="card-body" id="' + cbId + '">' +
+      '<div class="teams-grid">' + cards + '</div>' +
+    '</div>' +
+  '</div>';
+}
+
+/* ── Match schedule card ── */
+function buildMatchCard(poule, ms) {
+  if (!ms.length) return '<p style="color:var(--text-muted);font-style:italic;padding:12px 0">No matches scheduled.</p>';
+  const sorted = [...ms].sort((a, b) =>
+    a.date !== b.date ? a.date.localeCompare(b.date) : a.time.localeCompare(b.time)
+  );
+  let rows = '', last = null;
+  for (const m of sorted) {
+    if (m.date !== last) {
+      last = m.date;
+      rows += '<tr class="date-row"><td colspan="6">' + esc(fmtDate(m.date)) + '</td></tr>';
+    }
+    const s = getScore(m.id);
+    const va = s.a !== null ? s.a : '', vb = s.b !== null ? s.b : '';
+    const res = resultForA(m.id);
+    const tr = res === 'w' ? 'winner-a' : res === 'l' ? 'winner-b' : '';
+    rows += '<tr class="' + tr + '" data-match-row="' + esc(m.id) + '">' +
+      '<td>' + esc(m.time) + '</td>' +
+      '<td>' + esc(m.terrain) + '</td>' +
+      '<td>' + esc(m.team_a) + '</td>' +
+      '<td><div class="score-wrap">' +
+        '<input class="score-in" type="number" min="0" max="99" data-match="' + esc(m.id) + '" data-side="a" value="' + va + '" placeholder="—">' +
+        '<span class="score-sep">–</span>' +
+        '<input class="score-in" type="number" min="0" max="99" data-match="' + esc(m.id) + '" data-side="b" value="' + vb + '" placeholder="—">' +
+      '</div></td>' +
+      '<td>' + esc(m.team_b) + '</td>' +
+      '<td id="res-' + esc(m.id) + '">' + badgeHtml(res) + '</td>' +
+    '</tr>';
+  }
+  return '<div class="card">' +
+    '<div class="card-head">📅 Match Schedule — Poule ' + esc(poule) + '</div>' +
+    '<div class="tbl-wrap"><table>' +
+      '<thead><tr><th>Time</th><th>Terrain</th><th>Team A</th><th>Score</th><th>Team B</th><th>Result</th></tr></thead>' +
+      '<tbody>' + rows + '</tbody>' +
+    '</table></div>' +
+  '</div>';
+}
+
+/* ── Collapsible helper ── */
+function toggleCard(bodyId, headEl) {
+  const body = document.getElementById(bodyId);
+  if (!body) return;
+  const hidden = body.classList.toggle('hidden');
+  headEl.classList.toggle('collapsed', hidden);
+}
+
+/* ═══════════════════════════════════════════════════════
+   Static club info panels — TC Kooike, Kapellen
+   ═══════════════════════════════════════════════════════ */
+function buildStaticPanel(id) {
+  switch (id) {
+    case 'welkom':   return panelWelkom();
+    case 'kalender': return panelKalender();
+    case 'bestuur':  return panelBestuur();
+    case 'sfeer':    return panelSfeer();
+    case 'school':   return panelSchool();
+    case 'ladder':   return panelLadder();
+    case 'sponsors': return panelSponsors();
+    case 'contact':  return panelContact();
+    default: return '';
+  }
+}
+
+function panelWelkom() {
+  return '<div class="card"><div class="card-head">🎾 TC Kooike is ...</div><div class="card-body">' +
+    '<div style="display:grid;grid-template-columns:1fr 280px;gap:20px;align-items:start">' +
+      '<div>' +
+        '<p style="font-size:1.05rem;line-height:1.8;margin-bottom:14px">' +
+        '\u2026 een club <strong>voor iedereen</strong>. Of je nu net begint, al jaren speelt of gewoon graag een balletje slaat \u2014 bij TC Kooike voel je je meteen thuis. ' +
+        'Onze club telt leden van alle leeftijden en niveaus, verenigd door \u00e9\u00e9n passie: de liefde voor tennis.</p>' +
+        '<p style="font-size:1.05rem;line-height:1.8;margin-bottom:14px">' +
+        '\u2026 een club waar <strong>tennisplezier heerst</strong>. Van ontspannen dubbels op zondagochtend tot spannende competitiematchen \u2014 de glimlach op de baan is altijd het grootste. ' +
+        'Naast het tennis zorgen we ook voor gezelligheid buiten de lijnen: clubactiviteiten, tornooien en een warm clubgevoel het hele jaar door.</p>' +
+        '<p style="font-size:1.05rem;line-height:1.8;margin-bottom:14px">' +
+        '\u2026 een club <strong>van winnaars</strong>. Onze leden schitteren seizoen na seizoen in de interclub \u2014 maar winnen staat bij ons nooit boven het plezier. ' +
+        'Wie wil groeien, vindt bij ons de perfecte omgeving: professionele tennislessen via WhackIt, laddercompetitie voor extra uitdaging en ervaren medespelers die je graag verder helpen.</p>' +
+        '<p style="font-size:1.05rem;line-height:1.8">' +
+        '\u2026 maar bovenal een club met een heel groot <strong>\u2764\ufe0f</strong>. TC Kooike is meer dan een tennisclub \u2014 het is een gemeenschap. ' +
+        'Een plek waar vriendschappen worden gesmeed, herinneringen worden gemaakt en iedereen altijd welkom is.</p>' +
+      '</div>' +
+      '<div style="display:flex;flex-direction:column;gap:12px">' +
+        '<img src="images/sfeer/tennisplezier6.jpg" alt="TC Kooike" style="width:100%;height:160px;object-fit:cover;object-position:center top;border-radius:10px" onerror="this.style.display=\'none\'">' +
+        '<img src="images/sfeer/competitie2.jpg" alt="TC Kooike" style="width:100%;height:160px;object-fit:cover;object-position:center center;border-radius:10px" onerror="this.style.display=\'none\'">' +
+        '<img src="images/sfeer/sfb13.jpg" alt="TC Kooike" style="width:100%;height:160px;object-fit:cover;object-position:center top;border-radius:10px" onerror="this.style.display=\'none\'">' +
+      '</div>' +
+    '</div>' +
+    '</div></div>' +
+    '<div class="card"><div class="card-head">📍 Ons complex — Kapellen</div><div class="card-body">' +
+    '<p style="font-size:.92rem;line-height:1.8;margin-bottom:10px">' +
+    'TC Kooike is gevestigd in <strong>Kapellen</strong>, met meerdere buitenterreinen en padelvelden. ' +
+    'Terreinreservaties verlopen eenvoudig via Tennis &amp; Padel Vlaanderen.</p>' +
+    '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:14px">' +
+    '<a href="https://www.tennisenpadelvlaanderen.be/nl/clubdashboard/reserveer-een-terrein?clubId=2158" target="_blank" class="cta-btn">🎾 Reserveer een terrein</a>' +
+    '<a href="https://www.tennisenpadelvlaanderen.be/nl/clubdashboard/lid-worden?clubId=2158" target="_blank" class="cta-btn">✅ Word lid</a>' +
+    '</div>' +
+    '</div></div>';
+}
+
+function panelKalender() {
+  const events = [
+    { date: '8 februari 2026',       desc: 'Deadline korting lidmaatschap',    note: 'Schrijf vroeg in voor een korting op het lidgeld' },
+    { date: 'Maart 2026',            desc: 'Heraanleg velden',                 note: 'Datum TBD' },
+    { date: '6 april 2026',           desc: 'Start seizoen 🎉',                 note: 'Terreinreservaties via Tennis & Padel Vlaanderen' },
+    { date: '1 mei 2026',            desc: 'Dubbel gemengd dag',               note: 'Meer info volgt' },
+    { date: '12 – 21 juni 2026',     desc: 'Bring a Smile – Tornooi',         note: 'Inschrijving nog niet beschikbaar' },
+    { date: '28 augustus 2026',      desc: 'Nacht der Dubbels 🌙',             note: 'Nog niet beschikbaar' },
+    { date: '5 – 20 september 2026', desc: 'Fairplay Tornooi',                note: 'Nog niet beschikbaar' },
+  ];
+  const rows = events.map(e =>
+    '<div class="kal-item"><div class="kal-date">' + esc(e.date) + '</div>' +
+    '<div class="kal-desc">' + esc(e.desc) + '<small>' + esc(e.note) + '</small></div></div>'
+  ).join('');
+  const pics =
+    '<img src="images/kalender/kal1.jpg" alt="" style="width:100%;height:180px;object-fit:cover;object-position:center center;border-radius:7px;margin-bottom:8px" onerror="this.style.display=\'none\'">' +
+    '<img src="images/kalender/kal2.jpg" alt="" style="width:100%;height:180px;object-fit:cover;object-position:center top;border-radius:7px;margin-bottom:8px" onerror="this.style.display=\'none\'">' +
+    '<img src="images/kalender/kal3.jpg" alt="" style="width:100%;height:180px;object-fit:cover;object-position:center center;border-radius:7px" onerror="this.style.display=\'none\'">';
+  return '<div class="card"><div class="card-head">📅 Evenementen & Activiteiten 2026</div>' +
+    '<div class="card-body">' +
+    '<div style="display:grid;grid-template-columns:1fr 300px;gap:16px;align-items:start">' +
+      '<div>' +
+        '<div class="kal-grid">' + rows + '</div>' +
+        '<p class="help" style="margin-top:14px">Terreinreservaties via ' +
+        '<a href="https://www.tennisenpadelvlaanderen.be/nl/clubdashboard/reserveer-een-terrein?clubId=2158" target="_blank">Tennis & Padel Vlaanderen</a>. ' +
+        'Lid worden? <a href="https://www.tennisenpadelvlaanderen.be/nl/clubdashboard/lid-worden?clubId=2158" target="_blank">Schrijf je hier in</a>.</p>' +
+      '</div>' +
+      '<div>' + pics + '</div>' +
+    '</div>' +
+    '</div></div>';
+}
+
+function panelBestuur() {
+  const board = [
+    { name: 'Timothy Van Daele',    role: 'Voorzitter & elit verantwoordelijke',                     img: 'images/bestuur/timothy.jpg' },
+    { name: 'Anouk Van den Branden',role: 'Secretaris, elit verantwoordelijke & tennisschool',      img: '' },
+    { name: 'Philip Somers',        role: 'Penningmeester & aanspreekpunt padel',                   img: 'images/bestuur/philip.jpg' },
+    { name: 'Jan Viroux',           role: 'Bestuurslid & aanspreekpunt padel',                      img: 'images/bestuur/jan.jpg' },
+    { name: 'Steven De Cuyper',     role: 'Sponsoring, beheer & organisatie events',                img: 'images/bestuur/steven.jpg' },
+    { name: 'Glen Van Dyck',        role: 'Bestuurslid, beheer & organisatie events',               img: 'images/bestuur/glen.jpg' },
+  ];
+  const initials = name => name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
+  const cards = board.map(b =>
+    '<div class="board-card">' +
+      (b.img
+        ? '<img class="board-photo" src="' + esc(b.img) + '" alt="' + esc(b.name) + '" onerror="this.replaceWith(Object.assign(document.createElement(\'div\'),{className:\'board-photo board-initials\',textContent:\''+initials(b.name)+'\'}))" >'
+        : '<div class="board-photo board-initials">' + initials(b.name) + '</div>') +
+      '<div class="board-info"><div class="board-name">' + esc(b.name) + '</div>' +
+      '<div class="board-role">' + esc(b.role) + '</div></div>' +
+    '</div>'
+  ).join('');
+  return '<div class="card"><div class="card-head">👥 Dagelijks Bestuur — TC Kooike</div>' +
+    '<div class="card-body">' +
+    '<div class="board-grid">' + cards + '</div>' +
+    '<p class="help" style="margin-top:14px">Vragen of opmerkingen? ' +
+    '<a href="mailto:tckooike@gmail.com">tckooike@gmail.com</a> · ' +
+    '<a href="tel:+32497891454">+32 497 89 14 54</a> · ' +
+    '<a href="https://tckooike.wordpress.com/club/huishoudelijk-reglement-2025/" target="_blank">Clubreglement</a></p>' +
+    '</div></div>';
+}
+
+function panelSfeer() {
+  const sfeerImgs = [
+    { f: 'sfeer1',     c: 'Sfeerbeelden' }, { f: 'sfeer2',    c: '' }, { f: 'sfeer3', c: '' },
+    { f: 'sfeer4',     c: '' },             { f: 'sfeer5',    c: '' }, { f: 'sfeer6', c: '' },
+    { f: 'sfeer7',     c: '' },             { f: 'sfeer8',    c: '' },
+    { f: 'kids1',      c: 'Kids & jeugd' }, { f: 'kids2',     c: '' },
+    { f: 'plezier3',   c: 'Tennisplezier'},  { f: 'plezier4',  c: '' }, { f: 'plezier5', c: '' },
+    { f: 'competitie', c: 'Competitie' },   { f: 'groot_hart',c: '' },
+    { f: 'pink_ladies',c: '' },             { f: 'wim',       c: '' },
+  ];
+  const gallery = sfeerImgs.map(o =>
+    '<img src="images/sfeer/' + o.f + '.jpg" alt="' + esc(o.c) + '" onerror="this.style.display=\'none\'">'
+  ).join('');
+  return '<div class="card"><div class="card-head">📸 Sfeerbeelden</div>' +
+    '<div class="card-body">' +
+    '<p style="margin-bottom:14px;font-size:.88rem;color:var(--text-muted)">' +
+    '… een club voor iedereen &nbsp;·&nbsp; tennisplezier &nbsp;·&nbsp; winnaars &nbsp;·&nbsp; bekende gezichten &nbsp;·&nbsp; een groot ❤️</p>' +
+    '<div class="photo-gallery">' + gallery + '</div>' +
+    '</div></div>';
+}
+
+function panelSchool() {
+  return '<div class="card"><div class="card-head">🎾 Tennisschool TC Kooike &times; WhackIt</div><div class="card-body">' +
+    '<div style="display:grid;grid-template-columns:1fr 240px;gap:20px;align-items:start;margin-bottom:16px">' +
+      '<div>' +
+        '<p style="font-size:.95rem;line-height:1.8;margin-bottom:12px">' +
+        'TC Kooike organiseert, in samenwerking met tennisschool <strong>WhackIt</strong>, tennislessen die van start gaan in de <strong>week van 20 april 2026</strong>. ' +
+        'Deze lessen zijn beschikbaar voor zowel jeugd als volwassenen.</p>' +
+        '<p style="font-size:.9rem;font-weight:700;margin-bottom:6px;color:var(--clay-dark)">Wat bieden wij?</p>' +
+        '<ul style="font-size:.9rem;line-height:2;margin:0 0 12px 18px;color:var(--text)">' +
+          '<li><strong>Jeugdlessen</strong> – Voor zowel beginners als gevorderden.</li>' +
+          '<li><strong>Competitielessen</strong> – Voor de echte wedstrijdspelers.</li>' +
+          '<li><strong>Kleine groepen</strong> – Max. 4 spelers per trainer, persoonlijke aandacht.</li>' +
+          '<li><strong>Leuke &amp; uitdagende trainingen</strong> – Tennis voor zowel plezier als groei!</li>' +
+        '</ul>' +
+        '<p style="font-size:.9rem;font-weight:700;margin-bottom:6px;color:var(--clay-dark)">Waarom kiezen voor TC Kooike?</p>' +
+        '<ul style="font-size:.9rem;line-height:2;margin:0 0 0 18px;color:var(--text)">' +
+          '<li>✅ Gediplomeerde en enthousiaste trainers</li>' +
+          '<li>✅ Flexibele lesroosters, afgestemd op uw agenda</li>' +
+          '<li>✅ Van basistechniek naar echte competitie</li>' +
+        '</ul>' +
+      '</div>' +
+      '<img src="images/school/whackit.png" alt="WhackIt logo" class="whackit-logo" style="width:100%" onerror="this.style.display=\'none\'">' +
+    '</div>' +
+    '</div></div>' +
+    '<div class="card"><div class="card-head">👧 Kids &amp; Tieners</div><div class="card-body">' +
+    '<div class="tbl-wrap"><table class="school-tbl"><thead><tr><th>Groep</th><th>Formule</th><th>Prijs</th></tr></thead><tbody>' +
+    '<tr><td>Blauw (4–5 jaar)</td><td>1u/week · 8 lessen</td><td>€100</td></tr>' +
+    '<tr><td>Rood (6–8 jaar)</td><td>1u/week · 8 lessen</td><td>€100</td></tr>' +
+    '<tr><td>Oranje (9–10 jaar)</td><td>1u/week · 8 lessen</td><td>€100</td></tr>' +
+    '<tr><td>Groen (11–12 jaar)</td><td>1u/week · 8 lessen</td><td>€100</td></tr>' +
+    '<tr><td>Geel – Tieners (13–18 j)</td><td>1u/week · 8 lessen</td><td>€100</td></tr>' +
+    '<tr><td>Privé (1 speler)</td><td>1u/week · 8 lessen</td><td>€280</td></tr>' +
+    '<tr><td>Privé (2 spelers)</td><td>1u/week · 8 lessen</td><td>€140 pp</td></tr>' +
+    '</tbody></table></div>' +
+    '<p class="help" style="margin-top:10px">Lessen op <strong>woensdagnamiddag</strong> (14u–18u) en <strong>zaterdag</strong> (10u–13u). ' +
+    'Max. 4 spelers per trainer. Bij regenweer wordt de les uitgesteld.</p>' +
+    '</div></div>' +
+    '<div class="card"><div class="card-head">🧑 Volwassenen</div><div class="card-body">' +
+    '<div class="tbl-wrap"><table class="school-tbl"><thead><tr><th>Formule</th><th>Omschrijving</th><th>Prijs</th></tr></thead><tbody>' +
+    '<tr><td>Groepslessen beginners</td><td>1u/week · 8 lessen</td><td>€110 pp</td></tr>' +
+    '<tr><td>Groepslessen (half-)gevorderden</td><td>1u/week · 8 lessen</td><td>€110 pp</td></tr>' +
+    '<tr><td>Privé (1 speler)</td><td>1u/week · 8 lessen</td><td>€280</td></tr>' +
+    '<tr><td>Privé (2 spelers)</td><td>1u/week · 8 lessen</td><td>€140 pp</td></tr>' +
+    '<tr><td>Dubbeltraining (per 4)</td><td>Groep of individueel inschrijven</td><td>Op aanvraag</td></tr>' +
+    '</tbody></table></div>' +
+    '<p class="help" style="margin-top:10px">Groepslessen vereisen min. 3 spelers. Dubbeltraining ook individueel in te schrijven — TC Kooike stelt dan een groep samen op niveau.</p>' +
+    '</div></div>' +
+    '<a class="cta-btn" href="https://www.tennisenpadelvlaanderen.be/nl/clubdashboard/doelgroep-details?clubId=2158&aanbodId=8043&doelgroepId=35211" target="_blank">✏️ Inschrijven tennisschool</a>';
+}
+
+function panelLadder() {
+  const faq = [
+    { q: 'Wat is de laddercompetitie?', a: 'Een leuke manier om jezelf sportief te meten met anderen. De lager geplaatste speler daagt een hoger geplaatste uit. Als de uitdager wint, stijgt zijn positie. Je eindpositie bepaalt de winnaar van het seizoen.' },
+    { q: 'Hoe schrijf ik me in?', a: 'Via de website van Sportconnexions kun je inschrijven en aanduiden wanneer je beschikbaar bent en hoe snel het systeem wedstrijden mag inplannen.' },
+    { q: 'Hoe daag ik een speler uit?', a: 'Het systeem loot zelf de wedstrijden — je hoeft niemand zelf uit te dagen.' },
+    { q: 'Hoe plan ik een wedstrijd in?', a: 'Reserveer een baan via de app of website van Tennis & Padel Vlaanderen.' },
+    { q: 'Wat telt als wedstrijd?', a: 'Je speelt 1–1,5 uur inclusief 5 min inspelen. Tel de games door. Bij gelijke stand na 1 uur speel je nog 1 beslissende game.' },
+    { q: 'Waar voer ik de uitslag in?', a: 'In de laddercompetitie onder \'Wedstrijden\'. Doe dit binnen 10 dagen na de wedstrijd.' },
+    { q: 'Wat als een speler geblesseerd raakt?', a: 'De tegenpartij wint de wedstrijd.' },
+    { q: 'Wat als de score niet op tijd ingevuld is?', a: 'De eerstgenoemde speler zakt 1 plek. Neem tijdig contact op om dit te vermijden.' },
+    { q: 'Wanneer kan ik spelen?', a: 'Elke dag. Overdag en in het weekend is er meer beschikbaarheid. Doordeweekse avonden zijn doorgaans drukker.' },
+  ];
+  const faqHtml = faq.map(f =>
+    '<li><strong>' + esc(f.q) + '</strong>' + esc(f.a) + '</li>'
+  ).join('');
+  return '<div class="card"><div class="card-head">🪜 Laddercompetitie — Hoe werkt het?</div><div class="card-body">' +
+    '<img src="images/ladder/ladder.png" alt="Laddercompetitie" class="ladder-img" onerror="this.style.display=\'none\'">' +
+    '<p style="margin-bottom:14px;font-size:.9rem">De laddercompetitie is een uitstekende manier om je tennisspel te verbeteren, ' +
+    'andere leden te leren kennen en jezelf sportief te meten — voor elk niveau!</p>' +
+    '<ul class="faq-list">' + faqHtml + '</ul>' +
+    '<a class="cta-btn" href="https://sportconnexions.com/nl/tennis/leagues/2556/" target="_blank">🪜 Inschrijven laddercompetitie</a>' +
+    '</div></div>';
+}
+
+function panelSponsors() {
+  // Verified logo↔link mapping from tckooike.wordpress.com/sponsors/ (April 2026)
+  // BDV Windows and Mitch Peeters share the same logo image on the WordPress site.
+  // Files 31-1, 32, 35-36-37-38-39 appear on the page but without hyperlinks.
+  const sponsors = [
+    { img: 'images/sponsors/s30.png',              url: 'https://www.facebook.com/Bart-Van-Den-Bosch-953637634704875/', name: 'Bart Van Den Bosch' },
+    { img: 'images/sponsors/s08.png',              url: 'https://ensys.be/',                                             name: 'Ensys' },
+    { img: 'images/sponsors/bdvwindows.png',       url: 'https://bdvwindows.be/',                                        name: 'BDV Windows' },
+    { img: 'images/sponsors/s02.png',              url: 'https://www.vennincx.be/',                                      name: 'Vennincx' },
+    { img: 'images/sponsors/s05.png',              url: 'https://delhaizeputtekapellen.be/',                             name: 'Delhaize Putte-Kapellen' },
+    { img: 'images/sponsors/s09.png',              url: 'https://www.auctionport.be/',                                   name: 'AuctionPort' },
+    { img: 'images/sponsors/s12.png',              url: 'https://www.corpusfit.be/',                                     name: 'CorpusFit' },
+    { img: 'images/sponsors/bdvwindows.png',       url: 'https://mitchpeeters.be/',                                      name: 'Mitch Peeters' },
+    { img: 'images/sponsors/s14.png',              url: 'https://shop.lesable.be/',                                      name: 'LeSable' },
+    { img: 'images/sponsors/s17.png',              url: 'https://www.level4hair.be/',                                    name: 'Level4Hair' },
+    { img: 'images/sponsors/s20.png',              url: 'https://www.facebook.com/MoniqueStamByEva/',                   name: 'Monique Stam By Eva' },
+    { img: 'images/sponsors/s22.png',              url: 'https://www.concreetbv.be/',                                    name: 'Concreet BV' },
+    { img: 'images/sponsors/s23.png',              url: 'https://www.facebook.com/CASTELkapellen',                       name: 'Castel Kapellen' },
+    { img: 'images/sponsors/s24.png',              url: 'https://bobjanssens.com/',                                      name: 'Bob Janssens' },
+    { img: 'images/sponsors/s26.png',              url: 'https://www.deveehoeve.be/',                                    name: 'De Veehoeve' },
+    { img: 'images/sponsors/s28.png',              url: 'https://www.groepvanheyst.be/',                                 name: 'Groep Van Heyst' },
+    { img: 'images/sponsors/direggio.png',         url: 'https://www.direggio.co/',                                      name: 'DiReggio' },
+    { img: 'images/sponsors/s31.png',              url: null, name: 'Sponsor' },
+    { img: 'images/sponsors/s32.png',              url: null, name: 'Sponsor' },
+    { img: 'images/sponsors/s35.png',              url: null, name: 'Sponsor' },
+    { img: 'images/sponsors/s36.png',              url: null, name: 'Sponsor' },
+    { img: 'images/sponsors/s37.png',              url: null, name: 'Sponsor' },
+    { img: 'images/sponsors/s38.png',              url: null, name: 'Sponsor' },
+    { img: 'images/sponsors/s39.png',              url: null, name: 'Sponsor' },
+    { img: 'images/sponsors/bestratingen_mees.png',url: null, name: 'Bestratingen Mees' },
+  ];
+  const logos = sponsors.map(s =>
+    s.url
+      ? '<a href="' + esc(s.url) + '" target="_blank" rel="noopener noreferrer" title="' + esc(s.name) + '">' +
+          '<img src="' + esc(s.img) + '" alt="' + esc(s.name) + '" onerror="this.closest(\'a\').style.display=\'none\'">' +
+        '</a>'
+      : '<div style="display:flex;align-items:center;justify-content:center;padding:0;border:1px solid var(--border);border-radius:8px;background:#fff;height:160px;box-sizing:border-box;overflow:hidden">' +
+          '<img src="' + esc(s.img) + '" alt="' + esc(s.name) + '" style="width:100%;height:100%;object-fit:contain" onerror="this.parentElement.style.display=\'none\'">' +
+        '</div>'
+  ).join('');
+  return '<div class="card"><div class="card-head">🤝 Onze Sponsors</div><div class="card-body">' +
+    '<p style="margin-bottom:14px;font-size:.88rem;color:var(--text-muted)">TC Kooike kan rekenen op een geweldige groep sponsors. ' +
+    'Steun onze sponsors door hun logo aan te klikken!</p>' +
+    '<div class="sponsor-logo-grid">' + logos + '</div>' +
+    '<p class="help" style="margin-top:16px">Wil je ook sponsor worden? ' +
+    '<a href="https://eu.jotform.com/form/250444331244346" target="_blank">Vul het sponsorformulier in</a>.</p>' +
+    '</div></div>';
+}
+
+function panelContact() {
+  return '<div class="card"><div class="card-head">📞 Contact & Locatie — TC Kooike</div><div class="card-body">' +
+    '<div class="info-grid">' +
+      '<div class="info-card"><h3>📍 Adres</h3>' +
+        '<div class="contact-block"><strong>TC Kooike</strong><br>Ertbrandstraat 58<br>2920 Kapellen</div>' +
+        '<p class="help" style="margin-top:8px">Voldoende parking bij sporthal \'t Kooike.</p>' +
+      '</div>' +
+      '<div class="info-card"><h3>📧 E-mail & Telefoon</h3>' +
+        '<div class="contact-block">' +
+          '<a href="mailto:tckooike@gmail.com">tckooike@gmail.com</a><br>' +
+          '<a href="tel:+32497891454">+32 497 89 14 54</a>' +
+        '</div>' +
+      '</div>' +
+      '<div class="info-card"><h3>🔗 Handige links</h3>' +
+        '<div class="contact-block">' +
+          '<a href="https://www.tennisenpadelvlaanderen.be/nl/clubdashboard/reserveer-een-terrein?clubId=2158" target="_blank">Terrein reserveren</a><br>' +
+          '<a href="https://www.tennisenpadelvlaanderen.be/nl/clubdashboard/lid-worden?clubId=2158" target="_blank">Lid worden</a><br>' +
+          '<a href="https://www.padelkooike.be/" target="_blank">Padel Kooike</a><br>' +
+          '<a href="https://tckooike.wordpress.com/" target="_blank">Clubwebsite</a>' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div style="margin-top:14px;border-radius:8px;overflow:hidden;border:1px solid var(--border)">' +
+    '<iframe src="https://www.google.com/maps?q=Ertbrandstraat+58,+2920+Kapellen,+Belgium&output=embed" ' +
+    'width="100%" height="320" style="border:0;display:block" allowfullscreen loading="lazy"></iframe>' +
+    '</div>' +
+    '</div></div>';
+}
+
+/* ═══════════════════════════════════════════════════════
+   Event handling
+   ═══════════════════════════════════════════════════════ */
+function onScoreChange(e) {
+  const inp = e.target;
+  setScore(inp.dataset.match, inp.dataset.side, inp.value);
+  refreshMatch(inp.dataset.match);
+}
+function refreshMatch(id) {
+  const s = getScore(id);
+  const res = resultForA(id);
+  const trCls = res === 'w' ? 'winner-a' : res === 'l' ? 'winner-b' : '';
+  document.querySelectorAll('[data-match-row="' + CSS.escape(id) + '"]').forEach(tr => {
+    tr.className = trCls;
+    ['a', 'b'].forEach(side => {
+      tr.querySelectorAll('.score-in[data-side="' + side + '"]').forEach(inp => {
+        const cur = s[side] !== null ? String(s[side]) : '';
+        if (inp.value !== cur) inp.value = cur;
+      });
+    });
+  });
+  const badge = document.getElementById('res-' + CSS.escape(id));
+  if (badge) badge.innerHTML = badgeHtml(res);
+  const match = DATA.matches.find(m => m.id === id);
+  if (match) {
+    const el = document.getElementById('standings-' + CSS.escape(match.poule));
+    if (el) el.innerHTML = renderStandings(match.poule);
+  }
+  const chip = document.getElementById('chip-done');
+  if (chip) {
+    const n = DATA.matches.filter(m => { const s = getScore(m.id); return s.a !== null && s.b !== null; }).length;
+    chip.textContent = '✅ ' + n + ' results entered';
+  }
+}
+function refreshAll() {
+  for (const m of DATA.matches) refreshMatch(m.id);
+}
+
+/* ═══════════════════════════════════════════════════════
+   Init
+   ═══════════════════════════════════════════════════════ */
+async function init() {
+  document.getElementById('js-title').textContent = DATA.club_name;
+  document.getElementById('js-sub').innerHTML = 'TC Kooike is een club voor iedereen \u2014 een club waar tennisplezier heerst, een club van winnaars,<br>een club vol bekende gezichten, en bovenal een club met een heel groot \u2764\ufe0f';
+  document.title = DATA.club_name + ' — ' + DATA.season;
+  loadLocal();
+  buildNav();
+  buildAllPanels();
+  document.getElementById('btn-export').addEventListener('click', exportScores);
+  document.getElementById('btn-import-trigger').addEventListener('click', () =>
+    document.getElementById('file-import').click()
+  );
+  document.getElementById('file-import').addEventListener('change', e => {
+    if (e.target.files[0]) importScores(e.target.files[0]);
+    e.target.value = '';
+  });
+  await fetchServerScores();
+  refreshAll();
+}
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
