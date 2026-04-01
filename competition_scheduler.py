@@ -1709,8 +1709,7 @@ function panelSchool() {
     '<img src="images/school/school3.jpg" alt="" style="width:100%;height:180px;object-fit:cover;object-position:center top;border-radius:10px" onerror="this.style.display=\'none\'">' +
     '<img src="images/school/school4.jpg" alt="" style="width:100%;height:180px;object-fit:cover;object-position:center top;border-radius:10px" onerror="this.style.display=\'none\'">' +
   '</div>' +
-  '<div style="display:grid;grid-template-columns:1fr 220px;gap:20px;align-items:start;margin-bottom:16px">' +
-    '<div class="card"><div class="card-head">🎾 Tennisschool TC Kooike &times; WhackIt</div><div class="card-body">' +
+  '<div class="card" style="margin-bottom:16px"><div class="card-head">🎾 Tennisschool TC Kooike &times; WhackIt</div><div class="card-body">' +
     '<div>' +
         '<p style="font-size:.95rem;line-height:1.8;margin-bottom:12px">' +
         'TC Kooike organiseert, in samenwerking met tennisschool <strong>WhackIt</strong>, tennislessen die van start gaan in de <strong>week van 21 april 2026</strong>. ' +
@@ -1730,7 +1729,6 @@ function panelSchool() {
         '</ul>' +
       '</div>' +
     '</div></div>' +
-  '</div>' +
     '<div class="card"><div class="card-head">👧 Kids &amp; Tieners</div><div class="card-body">' +
     '<div class="tbl-wrap"><table class="school-tbl"><thead><tr><th>Groep</th><th>Formule</th><th>Prijs</th></tr></thead><tbody>' +
     '<tr><td>Blauw (4–5 jaar)</td><td>1u/week · 8 lessen</td><td>€100</td></tr>' +
