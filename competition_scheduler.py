@@ -1201,7 +1201,6 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
   <img src="images/logo.png" alt="TC Kooike" style="height:80px;width:80px;object-fit:contain;border-radius:50%;background:#fff;padding:3px;flex-shrink:0">
   <div class="hdr-text">
     <h1 id="js-title">Competition Schedule</h1>
-    <div class="sub" id="js-sub"></div>
   </div>
   <div class="hdr-actions">
     <a href="https://www.tennisenpadelvlaanderen.be/nl/clubdashboard/lid-worden?clubId=2158" target="_blank" class="btn btn-ghost" title="Lid worden bij TC Kooike">
@@ -1596,10 +1595,13 @@ function buildStaticPanel(id) {
 }
 
 function panelWelkom() {
-  return '<div class="card"><div class="card-head">🎾 TC Kooike is ...</div><div class="card-body">' +
-    '<div style="display:grid;grid-template-columns:1fr 280px;gap:20px;align-items:start">' +
-      '<div>' +
-        '<p style="font-size:1.05rem;line-height:1.8;margin-bottom:14px">' +
+  return '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px">' +
+      '<img src="images/sfeer/tennisplezier6.jpg" alt="TC Kooike" style="width:100%;height:200px;object-fit:cover;object-position:center top;border-radius:10px" onerror="this.style.display=\'none\'">' +
+      '<img src="images/sfeer/competitie2.jpg" alt="TC Kooike" style="width:100%;height:200px;object-fit:cover;object-position:center center;border-radius:10px" onerror="this.style.display=\'none\'">' +
+      '<img src="images/sfeer/sfb13.jpg" alt="TC Kooike" style="width:100%;height:200px;object-fit:cover;object-position:center top;border-radius:10px" onerror="this.style.display=\'none\'">' +
+    '</div>' +
+    '<div class="card"><div class="card-head">🎾 TC Kooike is ...</div><div class="card-body">' +
+    '<p style="font-size:1.05rem;line-height:1.8;margin-bottom:14px">' +
         '\u2026 een club <strong>voor iedereen</strong>. Of je nu net begint, al jaren speelt of gewoon graag een balletje slaat \u2014 bij TC Kooike voel je je meteen thuis. ' +
         'Onze club telt leden van alle leeftijden en niveaus, verenigd door \u00e9\u00e9n passie: de liefde voor tennis.</p>' +
         '<p style="font-size:1.05rem;line-height:1.8;margin-bottom:14px">' +
@@ -1611,15 +1613,8 @@ function panelWelkom() {
         '<p style="font-size:1.05rem;line-height:1.8">' +
         '\u2026 maar bovenal een club met een heel groot <strong>\u2764\ufe0f</strong>. TC Kooike is meer dan een tennisclub \u2014 het is een gemeenschap. ' +
         'Een plek waar vriendschappen worden gesmeed, herinneringen worden gemaakt en iedereen altijd welkom is.</p>' +
-      '</div>' +
-      '<div style="display:flex;flex-direction:column;gap:12px">' +
-        '<img src="images/sfeer/tennisplezier6.jpg" alt="TC Kooike" style="width:100%;height:160px;object-fit:cover;object-position:center top;border-radius:10px" onerror="this.style.display=\'none\'">' +
-        '<img src="images/sfeer/competitie2.jpg" alt="TC Kooike" style="width:100%;height:160px;object-fit:cover;object-position:center center;border-radius:10px" onerror="this.style.display=\'none\'">' +
-        '<img src="images/sfeer/sfb13.jpg" alt="TC Kooike" style="width:100%;height:160px;object-fit:cover;object-position:center top;border-radius:10px" onerror="this.style.display=\'none\'">' +
-      '</div>' +
-    '</div>' +
     '</div></div>' +
-    '<div class="card"><div class="card-head">📍 Ons complex — Kapellen</div><div class="card-body">' +
+    '<div class="card"><div class="card-head">🎾 Hoe reserveren?</div><div class="card-body">' +
     '<p style="font-size:.92rem;line-height:1.8;margin-bottom:10px">' +
     'TC Kooike is gevestigd in <strong>Kapellen</strong>, met meerdere buitenterreinen en padelvelden. ' +
     'Terreinreservaties verlopen eenvoudig via Tennis &amp; Padel Vlaanderen.</p>' +
@@ -1644,21 +1639,17 @@ function panelKalender() {
     '<div class="kal-item"><div class="kal-date">' + esc(e.date) + '</div>' +
     '<div class="kal-desc">' + esc(e.desc) + '<small>' + esc(e.note) + '</small></div></div>'
   ).join('');
-  const pics =
-    '<img src="images/kalender/kal1.jpg" alt="" style="width:100%;height:180px;object-fit:cover;object-position:center center;border-radius:7px;margin-bottom:8px" onerror="this.style.display=\'none\'">' +
-    '<img src="images/kalender/kal2.jpg" alt="" style="width:100%;height:180px;object-fit:cover;object-position:center top;border-radius:7px;margin-bottom:8px" onerror="this.style.display=\'none\'">' +
-    '<img src="images/kalender/kal3.jpg" alt="" style="width:100%;height:180px;object-fit:cover;object-position:center center;border-radius:7px" onerror="this.style.display=\'none\'">';
-  return '<div class="card"><div class="card-head">📅 Evenementen & Activiteiten 2026</div>' +
+  return '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px">' +
+    '<img src="images/sfeer/plezier5.jpg" alt="" style="width:100%;height:180px;object-fit:cover;object-position:center top;border-radius:7px" onerror="this.style.display=\'none\'">' +
+    '<img src="images/kalender/kal2.jpg" alt="" style="width:100%;height:180px;object-fit:cover;object-position:center top;border-radius:7px" onerror="this.style.display=\'none\'">' +
+    '<img src="images/kalender/kal_new.jpg" alt="" style="width:100%;height:180px;object-fit:cover;object-position:center top;border-radius:7px" onerror="this.style.display=\'none\'">' +
+  '</div>' +
+  '<div class="card"><div class="card-head">📅 Evenementen &amp; Activiteiten 2026</div>' +
     '<div class="card-body">' +
-    '<div style="display:grid;grid-template-columns:1fr 300px;gap:16px;align-items:start">' +
-      '<div>' +
-        '<div class="kal-grid">' + rows + '</div>' +
-        '<p class="help" style="margin-top:14px">Terreinreservaties via ' +
-        '<a href="https://www.tennisenpadelvlaanderen.be/nl/clubdashboard/reserveer-een-terrein?clubId=2158" target="_blank">Tennis & Padel Vlaanderen</a>. ' +
-        'Lid worden? <a href="https://www.tennisenpadelvlaanderen.be/nl/clubdashboard/lid-worden?clubId=2158" target="_blank">Schrijf je hier in</a>.</p>' +
-      '</div>' +
-      '<div>' + pics + '</div>' +
-    '</div>' +
+    '<div class="kal-grid">' + rows + '</div>' +
+    '<p class="help" style="margin-top:14px">Terreinreservaties via ' +
+    '<a href="https://www.tennisenpadelvlaanderen.be/nl/clubdashboard/reserveer-een-terrein?clubId=2158" target="_blank">Tennis &amp; Padel Vlaanderen</a>. ' +
+    'Lid worden? <a href="https://www.tennisenpadelvlaanderen.be/nl/clubdashboard/lid-worden?clubId=2158" target="_blank">Schrijf je hier in</a>.</p>' +
     '</div></div>';
 }
 
@@ -1713,11 +1704,11 @@ function panelSfeer() {
 }
 
 function panelSchool() {
-  return '<div class="card"><div class="card-head">🎾 Tennisschool TC Kooike &times; WhackIt</div><div class="card-body">' +
-    '<div style="display:grid;grid-template-columns:1fr 240px;gap:20px;align-items:start;margin-bottom:16px">' +
-      '<div>' +
+  return '<div style="display:grid;grid-template-columns:1fr 220px;gap:20px;align-items:start;margin-bottom:16px">' +
+    '<div class="card"><div class="card-head">🎾 Tennisschool TC Kooike &times; WhackIt</div><div class="card-body">' +
+    '<div>' +
         '<p style="font-size:.95rem;line-height:1.8;margin-bottom:12px">' +
-        'TC Kooike organiseert, in samenwerking met tennisschool <strong>WhackIt</strong>, tennislessen die van start gaan in de <strong>week van 20 april 2026</strong>. ' +
+        'TC Kooike organiseert, in samenwerking met tennisschool <strong>WhackIt</strong>, tennislessen die van start gaan in de <strong>week van 21 april 2026</strong>. ' +
         'Deze lessen zijn beschikbaar voor zowel jeugd als volwassenen.</p>' +
         '<p style="font-size:.9rem;font-weight:700;margin-bottom:6px;color:var(--clay-dark)">Wat bieden wij?</p>' +
         '<ul style="font-size:.9rem;line-height:2;margin:0 0 12px 18px;color:var(--text)">' +
@@ -1733,9 +1724,9 @@ function panelSchool() {
           '<li>✅ Van basistechniek naar echte competitie</li>' +
         '</ul>' +
       '</div>' +
-      '<img src="images/school/whackit.png" alt="WhackIt logo" class="whackit-logo" style="width:100%" onerror="this.style.display=\'none\'">' +
-    '</div>' +
     '</div></div>' +
+    '<img src="images/school/whackit.png" alt="WhackIt logo" class="whackit-logo" style="width:100%;height:auto;object-fit:contain" onerror="this.style.display=\'none\'">' +
+  '</div>' +
     '<div class="card"><div class="card-head">👧 Kids &amp; Tieners</div><div class="card-body">' +
     '<div class="tbl-wrap"><table class="school-tbl"><thead><tr><th>Groep</th><th>Formule</th><th>Prijs</th></tr></thead><tbody>' +
     '<tr><td>Blauw (4–5 jaar)</td><td>1u/week · 8 lessen</td><td>€100</td></tr>' +
@@ -1852,8 +1843,7 @@ function panelContact() {
         '<div class="contact-block">' +
           '<a href="https://www.tennisenpadelvlaanderen.be/nl/clubdashboard/reserveer-een-terrein?clubId=2158" target="_blank">Terrein reserveren</a><br>' +
           '<a href="https://www.tennisenpadelvlaanderen.be/nl/clubdashboard/lid-worden?clubId=2158" target="_blank">Lid worden</a><br>' +
-          '<a href="https://www.padelkooike.be/" target="_blank">Padel Kooike</a><br>' +
-          '<a href="https://tckooike.wordpress.com/" target="_blank">Clubwebsite</a>' +
+          '<a href="https://www.padelkooike.be/" target="_blank">Padel Kooike</a>' +
         '</div>' +
       '</div>' +
     '</div>' +
@@ -1907,7 +1897,6 @@ function refreshAll() {
    ═══════════════════════════════════════════════════════ */
 async function init() {
   document.getElementById('js-title').textContent = DATA.club_name;
-  document.getElementById('js-sub').innerHTML = 'TC Kooike is een club voor iedereen \u2014 een club waar tennisplezier heerst, een club van winnaars,<br>een club vol bekende gezichten, en bovenal een club met een heel groot \u2764\ufe0f';
   document.title = DATA.club_name + ' — ' + DATA.season;
   loadLocal();
   buildNav();
