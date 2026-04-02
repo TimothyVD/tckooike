@@ -1203,6 +1203,12 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
     .sponsor-logo-grid a:hover { box-shadow: 0 0 0 2px var(--clay-light); }
     .sponsor-logo-grid img { width: 100%; height: 100%; object-fit: contain; display: block; }
     @media (max-width: 480px) { .sponsor-logo-grid { grid-template-columns: repeat(2, 1fr); } }
+    @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+    .marquee-wrap { overflow: hidden; width: 100%; }
+    .marquee-track { display: flex; align-items: center; gap: 20px; width: max-content; animation: marquee 28s linear infinite; }
+    .marquee-track:hover { animation-play-state: paused; }
+    .marquee-track img { height: 50px; width: auto; max-width: 120px; object-fit: contain; flex-shrink: 0; filter: grayscale(20%); transition: filter .2s; }
+    .marquee-track img:hover { filter: none; }
     .ladder-img { width: 100%; max-width: 340px; display: block; margin: 0 auto 16px; }
     .whackit-logo { height: 220px; object-fit: contain; margin-bottom: 14px; display: block; }
     /* ── Responsive ── */
@@ -1406,6 +1412,29 @@ function rankSymbol(i) { return ['🥇','🥈','🥉'][i] || String(i + 1); }
 /* ═══════════════════════════════════════════════════════
    Build UI
    ═══════════════════════════════════════════════════════ */
+const SPONSORS = [
+  { img: 'images/sponsors/s30.png',              url: 'https://www.facebook.com/Bart-Van-Den-Bosch-953637634704875/',  name: 'Bart Van Den Bosch' },
+  { img: 'images/sponsors/s08.png',              url: 'https://ensys.be/',                                             name: 'Ensys' },
+  { img: 'images/sponsors/bdvwindows.png',       url: 'https://bdvwindows.be/',                                        name: 'BDV Windows' },
+  { img: 'images/sponsors/s02.png',              url: 'https://www.vennincx.be/',                                      name: 'Vennincx' },
+  { img: 'images/sponsors/s05.png',              url: 'https://delhaizeputtekapellen.be/',                             name: 'Delhaize Putte-Kapellen' },
+  { img: 'images/sponsors/s09.png',              url: 'https://www.auctionport.be/',                                   name: 'AuctionPort' },
+  { img: 'images/sponsors/s12.png',              url: 'https://www.corpusfit.be/',                                     name: 'CorpusFit' },
+  { img: 'images/sponsors/s20.png',              url: 'https://www.facebook.com/MoniqueStamByEva/',                   name: 'Monique Stam By Eva' },
+  { img: 'images/sponsors/s22.png',              url: 'https://www.concreetbv.be/',                                   name: 'Concreet BV' },
+  { img: 'images/sponsors/s24.png',              url: 'https://bobjanssens.com/',                                     name: 'Bob Janssens' },
+  { img: 'images/sponsors/s26.png',              url: 'https://www.deveehoeve.be/',                                   name: 'De Veehoeve' },
+  { img: 'images/sponsors/s28.png',              url: 'https://www.groepvanheyst.be/',                                name: 'Groep Van Heyst' },
+  { img: 'images/sponsors/direggio.png',         url: 'https://www.direggio.co/',                                     name: 'DiReggio' },
+  { img: 'images/sponsors/s31.png',              url: 'https://koosi.be/',                                            name: 'Koosi' },
+  { img: 'images/sponsors/s32.png',              url: 'https://www.renovant.be/',                                     name: 'Renovant' },
+  { img: 'images/sponsors/s35.png',              url: 'https://www.meesters.be/',                                     name: 'Meesters Acccountants' },
+  { img: 'images/sponsors/s36.png',              url: 'https://www.stabilos.be/',                                     name: 'Stabilos' },
+  { img: 'images/sponsors/s37.png',              url: 'https://steenhouwerij-denisse.be/',                            name: 'Steenhouwerij Denisse' },
+  { img: 'images/sponsors/s38.png',              url: null,                                                           name: 'APPPS Group' },
+  { img: 'images/sponsors/s39.png',              url: 'https://www.brasserie-tkoetshuis.be/home/',                   name: '\'t Koetshuis' },
+  { img: 'images/sponsors/bestratingen_mees.png',url: 'https://www.bestratingenmees.be/',                             name: 'Bestratingen Mees' },
+];
 const STATIC_TABS = [
   { id: 'welkom',   label: '🏠 Welkom' },
   { id: 'kalender', label: '📅 Kalender' },
@@ -1660,7 +1689,8 @@ function panelWelkom() {
         '\u2026 maar bovenal een club met een heel groot <strong>\u2764\ufe0f</strong>. TC Kooike is meer dan een tennisclub \u2014 het is een gemeenschap. ' +
         'Een plek waar vriendschappen worden gesmeed, herinneringen worden gemaakt en iedereen altijd welkom is.</p>' +
     '</div></div>' +
-    '<div class="card"><div class="card-head">🎾 Hoe reserveren?</div><div class="card-body">' +
+    '<div style="display:grid;grid-template-columns:2fr 1fr;gap:16px;align-items:stretch">' +
+    '<div class="card" style="margin-bottom:0"><div class="card-head">🎾 Hoe reserveren?</div><div class="card-body">' +
     '<p style="font-size:.92rem;line-height:1.8;margin-bottom:10px">' +
     'TC Kooike is gevestigd in <strong>Kapellen</strong>, met meerdere buitenterreinen en padelvelden. ' +
     'Terreinreservaties verlopen eenvoudig via Tennis &amp; Padel Vlaanderen.</p>' +
@@ -1668,7 +1698,14 @@ function panelWelkom() {
     '<a href="https://www.tennisenpadelvlaanderen.be/nl/clubdashboard/reserveer-een-terrein?clubId=2158" target="_blank" class="cta-btn">🎾 Reserveer een terrein</a>' +
     '<a href="https://www.tennisenpadelvlaanderen.be/nl/clubdashboard/lid-worden?clubId=2158" target="_blank" class="cta-btn">✅ Word lid</a>' +
     '</div>' +
-    '</div></div>';
+    '</div></div>' +
+    '<div class="card" style="margin-bottom:0;overflow:hidden"><div class="card-head">🤝 Sponsors</div><div class="card-body" style="padding:10px 0">' +
+    (function() {
+      const track = SPONSORS.map(s => '<img src="' + s.img + '" alt="' + s.name + '" title="' + s.name + '" onerror="this.style.display=\'none\'">').join('');
+      return '<div class="marquee-wrap"><div class="marquee-track">' + track + track + '</div></div>';
+    })() +
+    '</div></div>' +
+    '</div>';
 }
 
 function panelKalender() {
@@ -1875,29 +1912,7 @@ function panelSponsors() {
   // Verified logo↔link mapping from tckooike.wordpress.com/sponsors/ (April 2026)
   // BDV Windows and Mitch Peeters share the same logo image on the WordPress site.
   // Files 31-1, 32, 35-36-37-38-39 appear on the page but without hyperlinks.
-  const sponsors = [
-    { img: 'images/sponsors/s30.png',              url: 'https://www.facebook.com/Bart-Van-Den-Bosch-953637634704875/',  name: 'Bart Van Den Bosch' },
-    { img: 'images/sponsors/s08.png',              url: 'https://ensys.be/',                                             name: 'Ensys' },
-    { img: 'images/sponsors/bdvwindows.png',       url: 'https://bdvwindows.be/',                                        name: 'BDV Windows' },
-    { img: 'images/sponsors/s02.png',              url: 'https://www.vennincx.be/',                                      name: 'Vennincx' },
-    { img: 'images/sponsors/s05.png',              url: 'https://delhaizeputtekapellen.be/',                             name: 'Delhaize Putte-Kapellen' },
-    { img: 'images/sponsors/s09.png',              url: 'https://www.auctionport.be/',                                   name: 'AuctionPort' },
-    { img: 'images/sponsors/s12.png',              url: 'https://www.corpusfit.be/',                                     name: 'CorpusFit' },
-    { img: 'images/sponsors/s20.png',              url: 'https://www.facebook.com/MoniqueStamByEva/',                    name: 'Monique Stam By Eva' },
-    { img: 'images/sponsors/s22.png',              url: 'https://www.concreetbv.be/',                                    name: 'Concreet BV' },
-    { img: 'images/sponsors/s24.png',              url: 'https://bobjanssens.com/',                                      name: 'Bob Janssens' },
-    { img: 'images/sponsors/s26.png',              url: 'https://www.deveehoeve.be/',                                    name: 'De Veehoeve' },
-    { img: 'images/sponsors/s28.png',              url: 'https://www.groepvanheyst.be/',                                 name: 'Groep Van Heyst' },
-    { img: 'images/sponsors/direggio.png',         url: 'https://www.direggio.co/',                                      name: 'DiReggio' },
-    { img: 'images/sponsors/s31.png',              url: 'https://koosi.be/',                                             name: 'Koosi' },
-    { img: 'images/sponsors/s32.png',              url: 'https://www.renovant.be/',                                      name: 'Renovant' },
-    { img: 'images/sponsors/s35.png',              url: 'https://www.meesters.be/',                                      name: 'Meesters Acccountants' },
-    { img: 'images/sponsors/s36.png',              url: 'https://www.stabilos.be/',                                      name: 'Stabilos' },
-    { img: 'images/sponsors/s37.png',              url: 'https://steenhouwerij-denisse.be/',                             name: 'Steenhouwerij Denisse' },
-    { img: 'images/sponsors/s38.png',              url: null,                                                            name: 'APPPS Group' },
-    { img: 'images/sponsors/s39.png',              url: 'https://www.brasserie-tkoetshuis.be/home/',                     name: '\'t Koetshuis' },
-    { img: 'images/sponsors/bestratingen_mees.png',url: 'https://www.bestratingenmees.be/',                              name: 'Bestratingen Mees' },
-  ];
+  const sponsors = SPONSORS;
   const logos = [...sponsors].sort(() => Math.random() - 0.5).map(s =>
     s.url
       ? '<a href="' + esc(s.url) + '" target="_blank" rel="noopener noreferrer" title="' + esc(s.name) + '">' +
