@@ -1204,10 +1204,10 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
     .sponsor-logo-grid img { width: 100%; height: 100%; object-fit: contain; display: block; }
     @media (max-width: 480px) { .sponsor-logo-grid { grid-template-columns: repeat(2, 1fr); } }
     @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-    .marquee-wrap { overflow: hidden; width: 100%; }
-    .marquee-track { display: flex; align-items: center; gap: 20px; width: max-content; animation: marquee 28s linear infinite; }
+    .marquee-wrap { overflow: hidden; width: 100%; flex: 1; display: flex; min-height: 80px; }
+    .marquee-track { display: flex; align-items: center; gap: 24px; width: max-content; animation: marquee 50s linear infinite; height: 100%; }
     .marquee-track:hover { animation-play-state: paused; }
-    .marquee-track img { height: 50px; width: auto; max-width: 120px; object-fit: contain; flex-shrink: 0; filter: grayscale(20%); transition: filter .2s; }
+    .marquee-track img { height: 100%; min-height: 70px; max-height: 200px; width: auto; max-width: 150px; object-fit: contain; flex-shrink: 0; filter: grayscale(20%); transition: filter .2s; }
     .marquee-track img:hover { filter: none; }
     .ladder-img { width: 100%; max-width: 340px; display: block; margin: 0 auto 16px; }
     .whackit-logo { height: 220px; object-fit: contain; margin-bottom: 14px; display: block; }
@@ -1699,7 +1699,7 @@ function panelWelkom() {
     '<a href="https://www.tennisenpadelvlaanderen.be/nl/clubdashboard/lid-worden?clubId=2158" target="_blank" class="cta-btn">✅ Word lid</a>' +
     '</div>' +
     '</div></div>' +
-    '<div class="card" style="margin-bottom:0;overflow:hidden"><div class="card-head">🤝 Sponsors</div><div class="card-body" style="padding:10px 0">' +
+    '<div class="card" style="margin-bottom:0;overflow:hidden;display:flex;flex-direction:column"><div class="card-head">🤝 Sponsors</div><div class="card-body" style="padding:12px;flex:1;display:flex;align-items:stretch">' +
     (function() {
       const track = SPONSORS.map(s => '<img src="' + s.img + '" alt="' + s.name + '" title="' + s.name + '" onerror="this.style.display=\'none\'">').join('');
       return '<div class="marquee-wrap"><div class="marquee-track">' + track + track + '</div></div>';
