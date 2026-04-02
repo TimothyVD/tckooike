@@ -1691,9 +1691,8 @@ function panelBestuur() {
     '<p class="help" style="margin-top:14px">Vragen of opmerkingen? ' +
     '<a href="mailto:tckooike@gmail.com">tckooike@gmail.com</a> · ' +
     '<a href="tel:+32497891454">+32 497 89 14 54 (Steven)</a> · ' +
-    '<a href="https://tckooike.wordpress.com/club/huishoudelijk-reglement-2025/" target="_blank">Clubreglement</a></p>' +
     '</div></div>' +
-    '<div class="card" style="margin-top:16px"><div class="card-head">📋 Huishoudelijk Reglement 2025</div><div class="card-body" style="max-height:520px;overflow-y:auto;font-size:.88rem;line-height:1.75;color:var(--text)">' +
+    '<div class="card" style="margin-top:16px"><div class="card-head">📋 Huishoudelijk Reglement</div><div class="card-body" style="max-height:520px;overflow-y:auto;font-size:.88rem;line-height:1.75;color:var(--text)">' +
       '<p style="font-size:.8rem;color:var(--text-muted);margin-bottom:14px">Alle leden van TC Kooike verklaren kennis te hebben genomen van het clubreglement en verplichten zich dit na te leven.</p>' +
 
       '<p style="font-weight:700;color:var(--clay-dark);margin:14px 0 4px">LIDMAATSCHAP</p>' +
@@ -1725,8 +1724,7 @@ function panelBestuur() {
       '<p style="font-weight:700;color:var(--clay-dark);margin:14px 0 4px">NIET-NALEVING REGLEMENT</p>' +
       '<p>Leden die één of meerdere bepalingen van dit reglement niet naleven, kunnen door bestuursleden de toegang tot de terreinen ontzegd worden. Het bestuur kan één of meerdere maatregelen opleggen, wat kan leiden tot uitsluiting van de club en/of weigering van het lidmaatschap voor het volgende jaar.</p>' +
 
-      '<p style="margin-top:16px;font-size:.78rem;color:var(--text-muted)">Volledige tekst: <a href="https://tckooike.wordpress.com/club/huishoudelijk-reglement-2025/" target="_blank">tckooike.wordpress.com &rarr; Huishoudelijk Reglement 2025</a></p>' +
-    '</div></div>';
+      '</div></div>';
 }
 
 function panelSfeer() {
