@@ -1154,7 +1154,8 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
     .tab-nav { align-items: center; }
     .tab-sep { width: 1px; height: 26px; background: var(--border); margin: 0 6px; flex-shrink: 0; }
     /* ── Static info sections ── */
-    .info-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin-bottom: 16px; }
+    .info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+    @media (max-width: 600px) { .info-grid { grid-template-columns: 1fr; } }
     .info-card { border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; background: var(--card); }
     .info-card h3 { color: var(--clay-dark); font-size: .95rem; margin-bottom: 8px; }
     .info-card p, .info-card li { font-size: .85rem; color: var(--text-muted); line-height: 1.7; }
