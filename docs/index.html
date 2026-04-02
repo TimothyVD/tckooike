@@ -211,6 +211,7 @@
       .tab-btn { padding: 10px 11px; font-size: .8rem; }
       .main { padding: 14px 10px; }
       .kal-date { min-width: 100px; }
+      .welkom-bottom-grid { grid-template-columns: 1fr !important; }
     }
     @media print {
       .site-header, .tab-nav { display: none !important; }
@@ -682,7 +683,7 @@ function panelWelkom() {
         '\u2026 maar bovenal een club met een heel groot <strong>\u2764\ufe0f</strong>. TC Kooike is meer dan een tennisclub \u2014 het is een gemeenschap. ' +
         'Een plek waar vriendschappen worden gesmeed, herinneringen worden gemaakt en iedereen altijd welkom is.</p>' +
     '</div></div>' +
-    '<div style="display:grid;grid-template-columns:2fr 1fr;gap:16px;align-items:stretch">' +
+    '<div class="welkom-bottom-grid" style="display:grid;grid-template-columns:2fr 1fr;gap:16px;align-items:stretch">' +
     '<div class="card" style="margin-bottom:0"><div class="card-head">🎾 Hoe reserveren?</div><div class="card-body">' +
     '<p style="font-size:.92rem;line-height:1.8;margin-bottom:10px">' +
     'TC Kooike is gevestigd in <strong>Kapellen</strong>, met meerdere buitenterreinen en padelvelden. ' +
@@ -694,7 +695,8 @@ function panelWelkom() {
     '</div></div>' +
     '<div class="card" style="margin-bottom:0;overflow:hidden;display:flex;flex-direction:column"><div class="card-head">🤝 Sponsors</div><div class="card-body" style="padding:12px;flex:1;display:flex;align-items:stretch">' +
     (function() {
-      const track = SPONSORS.map(s => '<img src="' + s.img + '" alt="' + s.name + '" title="' + s.name + '" onerror="this.style.display=\'none\'">').join('');
+      const shuffled = [...SPONSORS].sort(() => Math.random() - 0.5);
+      const track = shuffled.map(s => '<img src="' + s.img + '" alt="' + s.name + '" title="' + s.name + '" onerror="this.style.display=\'none\'">' ).join('');
       return '<div class="marquee-wrap"><div class="marquee-track">' + track + track + '</div></div>';
     })() +
     '</div></div>' +
