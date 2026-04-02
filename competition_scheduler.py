@@ -1187,8 +1187,15 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
     .board-role { font-size: .82rem; color: var(--text-muted); line-height: 1.5; }
     .board-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
     .photo-gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
-    .photo-gallery img { width: 100%; height: 240px; object-fit: cover; object-position: center top; border-radius: 7px; cursor: pointer; transition: opacity .15s; }
-    .photo-gallery img:hover { opacity: .88; }
+    .photo-gallery a.lb-trigger { display: block; cursor: zoom-in; }
+    .photo-gallery img { width: 100%; height: 240px; object-fit: cover; object-position: center top; border-radius: 7px; transition: opacity .15s; }
+    .photo-gallery a.lb-trigger:hover img { opacity: .88; }
+    /* ── Lightbox ── */
+    #lb-overlay { display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,.88); align-items:center; justify-content:center; }
+    #lb-overlay.open { display:flex; }
+    #lb-overlay img { max-width:92vw; max-height:92vh; border-radius:6px; box-shadow:0 4px 32px rgba(0,0,0,.6); }
+    #lb-close { position:absolute; top:18px; right:24px; font-size:2rem; color:#fff; cursor:pointer; line-height:1; background:none; border:none; opacity:.8; }
+    #lb-close:hover { opacity:1; }
     /* .sponsor-logo-grid overridden below by 3-per-row grid rule */
     .sponsor-logo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 16px; }
     .sponsor-logo-grid a { display: flex; align-items: center; justify-content: center; padding: 0; border: 1px solid var(--border); border-radius: 8px; background: #fff; transition: box-shadow .15s; height: 160px; box-sizing: border-box; overflow: hidden; }
@@ -1242,6 +1249,10 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
 <nav class="tab-nav" id="tab-nav"></nav>
 <main class="main" id="main-content"></main>
 <div class="toast" id="toast"></div>
+<div id="lb-overlay" role="dialog" aria-modal="true">
+  <button id="lb-close" aria-label="Sluiten">&times;</button>
+  <img id="lb-img" src="" alt="">
+</div>
 
 <script>
 /* ═══════════════════════════════════════════════════════
@@ -1771,7 +1782,9 @@ function panelSfeer() {
     { f: 'pink_ladies',c: '' },             { f: 'wim',       c: '' },
   ];
   const gallery = sfeerImgs.map(o =>
-    '<img src="images/sfeer/' + o.f + '.jpg" alt="' + esc(o.c) + '" onerror="this.style.display=\'none\'">'
+    '<a href="images/sfeer/full/' + o.f + '.jpg" class="lb-trigger" aria-label="' + esc(o.c || 'Sfeerbeeld') + '">' +
+    '<img src="images/sfeer/' + o.f + '.jpg" alt="' + esc(o.c) + '" onerror="this.parentElement.style.display=\'none\'">' +
+    '</a>'
   ).join('');
   return '<div class="card"><div class="card-head">📸 Sfeerbeelden</div>' +
     '<div class="card-body">' +
@@ -1983,6 +1996,20 @@ async function init() {
   document.getElementById('file-import').addEventListener('change', e => {
     if (e.target.files[0]) importScores(e.target.files[0]);
     e.target.value = '';
+  });
+  // Lightbox
+  const overlay = document.getElementById('lb-overlay');
+  const lbImg   = document.getElementById('lb-img');
+  function lbOpen(src, alt) { lbImg.src = src; lbImg.alt = alt; overlay.classList.add('open'); }
+  function lbClose() { overlay.classList.remove('open'); lbImg.src = ''; }
+  document.getElementById('lb-close').addEventListener('click', lbClose);
+  overlay.addEventListener('click', e => { if (e.target === overlay) lbClose(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') lbClose(); });
+  document.addEventListener('click', e => {
+    const a = e.target.closest('a.lb-trigger');
+    if (!a) return;
+    e.preventDefault();
+    lbOpen(a.href, a.getAttribute('aria-label') || '');
   });
   await fetchServerScores();
   refreshAll();
