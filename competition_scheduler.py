@@ -1898,7 +1898,7 @@ function panelSponsors() {
     { img: 'images/sponsors/s39.png',              url: 'https://www.brasserie-tkoetshuis.be/home/',                     name: '\'t Koetshuis' },
     { img: 'images/sponsors/bestratingen_mees.png',url: 'https://www.bestratingenmees.be/',                              name: 'Bestratingen Mees' },
   ];
-  const logos = sponsors.map(s =>
+  const logos = [...sponsors].sort(() => Math.random() - 0.5).map(s =>
     s.url
       ? '<a href="' + esc(s.url) + '" target="_blank" rel="noopener noreferrer" title="' + esc(s.name) + '">' +
           '<img src="' + esc(s.img) + '" alt="' + esc(s.name) + '" onerror="this.closest(\'a\').style.display=\'none\'">' +
