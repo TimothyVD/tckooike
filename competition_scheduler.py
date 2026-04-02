@@ -1655,12 +1655,12 @@ function panelWelkom() {
 function panelKalender() {
   const events = [
     { date: '8 februari 2026',       desc: 'Deadline korting lidmaatschap',    note: 'Schrijf vroeg in voor een korting op het lidgeld' },
-    { date: 'Maart 2026',            desc: 'Heraanleg velden',                 note: 'Datum TBD' },
+    { date: 'Maart 2026',            desc: 'Heraanleg velden',                 note: null },
     { date: '6 april 2026',           desc: 'Start seizoen 🎉',                 note: 'Terreinreservaties via Tennis & Padel Vlaanderen' },
-    { date: '1 mei 2026',            desc: 'Dubbel gemengd dag',               note: 'Meer info volgt' },
-    { date: '12 – 21 juni 2026',     desc: 'Bring a Smile – Tornooi',         note: 'Inschrijving nog niet beschikbaar' },
-    { date: '28 augustus 2026',      desc: 'Nacht der Dubbels 🌙',             note: 'Nog niet beschikbaar' },
-    { date: '5 – 20 september 2026', desc: 'Fairplay Tornooi',                note: 'Nog niet beschikbaar' },
+    { date: '1 mei 2026',            desc: 'Dubbel gemengd dag',               note: 'Inschrijven via :' },
+    { date: '12 – 21 juni 2026',     desc: 'Bring a Smile – Tornooi',         note: null },
+    { date: '28 augustus 2026',      desc: 'Nacht der Dubbels 🌙',             note: null },
+    { date: '5 – 20 september 2026', desc: 'Fairplay Tornooi',                note:  null },
   ];
   const rows = events.map(e =>
     '<div class="kal-item"><div class="kal-date">' + esc(e.date) + '</div>' +
