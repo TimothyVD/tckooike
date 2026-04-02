@@ -1669,7 +1669,7 @@ function panelKalender() {
 function panelBestuur() {
   const board = [
     { name: 'Timothy Van Daele',    role: 'Voorzitter & elit verantwoordelijke',                     img: 'images/bestuur/timothy.jpg' },
-    { name: 'Anouk Van den Branden',role: 'Secretaris, elit verantwoordelijke & tennisschool',      img: '' },
+    { name: 'Anouk Van den Branden',role: 'Secretaris, elit verantwoordelijke & tennisschool',      img: 'images/bestuur/anouk.jpg' },
     { name: 'Philip Somers',        role: 'Penningmeester & aanspreekpunt padel',                   img: 'images/bestuur/philip.jpg' },
     { name: 'Jan Viroux',           role: 'Bestuurslid & aanspreekpunt padel',                      img: 'images/bestuur/jan.jpg' },
     { name: 'Steven De Cuyper',     role: 'Sponsoring, beheer & organisatie events',                img: 'images/bestuur/steven.jpg' },
@@ -1685,13 +1685,47 @@ function panelBestuur() {
       '<div class="board-role">' + esc(b.role) + '</div></div>' +
     '</div>'
   ).join('');
-  return '<div class="card"><div class="card-head">👥 Dagelijks Bestuur — TC Kooike</div>' +
+  return '<div class="card"><div class="card-head">👥 Dagelijks Bestuur</div>' +
     '<div class="card-body">' +
     '<div class="board-grid">' + cards + '</div>' +
     '<p class="help" style="margin-top:14px">Vragen of opmerkingen? ' +
     '<a href="mailto:tckooike@gmail.com">tckooike@gmail.com</a> · ' +
-    '<a href="tel:+32497891454">+32 497 89 14 54</a> · ' +
+    '<a href="tel:+32497891454">+32 497 89 14 54 (Steven)</a> · ' +
     '<a href="https://tckooike.wordpress.com/club/huishoudelijk-reglement-2025/" target="_blank">Clubreglement</a></p>' +
+    '</div></div>' +
+    '<div class="card" style="margin-top:16px"><div class="card-head">📋 Huishoudelijk Reglement 2025</div><div class="card-body" style="max-height:520px;overflow-y:auto;font-size:.88rem;line-height:1.75;color:var(--text)">' +
+      '<p style="font-size:.8rem;color:var(--text-muted);margin-bottom:14px">Alle leden van TC Kooike verklaren kennis te hebben genomen van het clubreglement en verplichten zich dit na te leven.</p>' +
+
+      '<p style="font-weight:700;color:var(--clay-dark);margin:14px 0 4px">LIDMAATSCHAP</p>' +
+      '<p>Leden kunnen hun lidmaatschap jaarlijks verlengen via de website van Tennis Vlaanderen. De inschrijving is pas definitief zodra de betaling volledig is verwerkt en goedgekeurd door de club.</p>' +
+      '<p style="margin-top:6px">De actuele bedragen voor de lidgelden en eventuele kortingen worden aan het begin van het seizoen aan de leden verstrekt en zijn tevens te raadplegen op de websites van de club en Tennis Vlaanderen. Het dagelijks bestuur behoudt zich het recht voor om de lidgelden jaarlijks aan te passen; dit wordt gepresenteerd op het infomoment in november.</p>' +
+      '<p style="margin-top:6px">Nieuwe leden kunnen zich inschrijven via Tennis Vlaanderen onder de tab &lsquo;Tarieven&rsquo;. De verwerkingstijd bedraagt circa 5 werkdagen.</p>' +
+
+      '<p style="font-weight:700;color:var(--clay-dark);margin:14px 0 4px">TERREINEN</p>' +
+      '<p>De club beschikt over vier tennisterreinen met gravelondergrond, toegankelijk van april tot oktober. Het gebruik is, na reservering, voorbehouden aan spelende leden (betaald lidmaatschap) en gastspelers (€&nbsp;5,00/speler/uur of €&nbsp;15 per terrein).</p>' +
+      '<p style="margin-top:6px">Bij overvloedige regenval is spelen niet toegestaan ter bescherming van de ondergrond. Het bestuur kan terreinen preventief sluiten en reservaties annuleren. De terreinen mogen uitsluitend betreden worden met gepaste schoenen.</p>' +
+
+      '<p style="font-weight:700;color:var(--clay-dark);margin:14px 0 4px">RESERVATIES</p>' +
+      '<p>Reservatiezones: Terrein 1, 2 &amp; 3 &mdash; 90 minuten &bull; Terrein 4 &mdash; 60 minuten.</p>' +
+      '<p style="margin-top:6px">Na elk speelmoment dient het terrein geveegd en (indien nodig) besproeid te worden. Afval hoort in de vuilnisbakken.</p>' +
+      '<p style="margin-top:6px">In de <strong>avondzone</strong> is 1 reservatie per 7 dagen toegestaan; in de <strong>dagzone</strong> 2 reservaties per 7 dagen (onafhankelijk van elkaar). Jeugdleden (&lt;&nbsp;18 jaar) kunnen enkel op de dag zelf (8 uur van tevoren) een terrein in de avondzone reserveren.</p>' +
+      '<p style="margin-top:6px">Het bestuur behoudt zich het recht voor om terreinen te reserveren. Voorrang op vrije reservaties hebben: competitie-ontmoetingen (Interclub, ART, Noorderkempen, Beker Claus), tornooien, tennislessen, clubdagen/-activiteiten en onderhoud.</p>' +
+
+      '<p style="font-weight:700;color:var(--clay-dark);margin:14px 0 4px">GASTSPELER(S)</p>' +
+      '<p>Een gastspeler betaalt vooraf €&nbsp;5,00 per persoon of €&nbsp;15 per terrein via het automatische betaalsysteem gekoppeld aan de reservatie.</p>' +
+
+      '<p style="font-weight:700;color:var(--clay-dark);margin:14px 0 4px">ACCOMMODATIE &amp; KLEEDKAMERS</p>' +
+      '<p>Bij beschadiging of defecten aan de accommodatie (netten, veegmatten, sproeisysteem, verlichting) dient dit zo spoedig mogelijk gemeld te worden aan een bestuurslid of de terreinverantwoordelijke. Elk lid is verantwoordelijk voor schade die hij/zij veroorzaakt.</p>' +
+      '<p style="margin-top:6px">Zorg ervoor dat douches en kleedkamers netjes worden achtergelaten. De club is niet verantwoordelijk voor diefstal van persoonlijke spullen. Gelieve elke overtreding onmiddellijk aan een bestuurslid te melden. Tijdens sluitingstijden of privé-feesten van Bar Castel dient u de achteringang te gebruiken.</p>' +
+
+      '<p style="font-weight:700;color:var(--clay-dark);margin:14px 0 4px">TENNISLESSEN</p>' +
+      '<p>In samenwerking met tennisschool WhackIt organiseert de club tennislessen vanaf april. Lesnemers zijn verplicht lid van de club. Betaling van lid- en lesgeld dient voor aanvang van de lessenreeks in orde te zijn; bij ontbreken van betaling wordt toegang tot de tennisvelden geweigerd. Tarieven zijn te raadplegen op <a href="https://www.tckooike.com" target="_blank">www.tckooike.com</a> of via Tennis Vlaanderen.</p>' +
+      '<p style="margin-top:6px">Het organiseren van tennislessen met andere tennisleraren is toegestaan mits toestemming van het dagelijks bestuur.</p>' +
+
+      '<p style="font-weight:700;color:var(--clay-dark);margin:14px 0 4px">NIET-NALEVING REGLEMENT</p>' +
+      '<p>Leden die één of meerdere bepalingen van dit reglement niet naleven, kunnen door bestuursleden de toegang tot de terreinen ontzegd worden. Het bestuur kan één of meerdere maatregelen opleggen, wat kan leiden tot uitsluiting van de club en/of weigering van het lidmaatschap voor het volgende jaar.</p>' +
+
+      '<p style="margin-top:16px;font-size:.78rem;color:var(--text-muted)">Volledige tekst: <a href="https://tckooike.wordpress.com/club/huishoudelijk-reglement-2025/" target="_blank">tckooike.wordpress.com &rarr; Huishoudelijk Reglement 2025</a></p>' +
     '</div></div>';
 }
 
@@ -1797,31 +1831,27 @@ function panelSponsors() {
   // BDV Windows and Mitch Peeters share the same logo image on the WordPress site.
   // Files 31-1, 32, 35-36-37-38-39 appear on the page but without hyperlinks.
   const sponsors = [
-    { img: 'images/sponsors/s30.png',              url: 'https://www.facebook.com/Bart-Van-Den-Bosch-953637634704875/', name: 'Bart Van Den Bosch' },
+    { img: 'images/sponsors/s30.png',              url: 'https://www.facebook.com/Bart-Van-Den-Bosch-953637634704875/',  name: 'Bart Van Den Bosch' },
     { img: 'images/sponsors/s08.png',              url: 'https://ensys.be/',                                             name: 'Ensys' },
     { img: 'images/sponsors/bdvwindows.png',       url: 'https://bdvwindows.be/',                                        name: 'BDV Windows' },
     { img: 'images/sponsors/s02.png',              url: 'https://www.vennincx.be/',                                      name: 'Vennincx' },
     { img: 'images/sponsors/s05.png',              url: 'https://delhaizeputtekapellen.be/',                             name: 'Delhaize Putte-Kapellen' },
     { img: 'images/sponsors/s09.png',              url: 'https://www.auctionport.be/',                                   name: 'AuctionPort' },
     { img: 'images/sponsors/s12.png',              url: 'https://www.corpusfit.be/',                                     name: 'CorpusFit' },
-    { img: 'images/sponsors/bdvwindows.png',       url: 'https://mitchpeeters.be/',                                      name: 'Mitch Peeters' },
-    { img: 'images/sponsors/s14.png',              url: 'https://shop.lesable.be/',                                      name: 'LeSable' },
-    { img: 'images/sponsors/s17.png',              url: 'https://www.level4hair.be/',                                    name: 'Level4Hair' },
-    { img: 'images/sponsors/s20.png',              url: 'https://www.facebook.com/MoniqueStamByEva/',                   name: 'Monique Stam By Eva' },
+    { img: 'images/sponsors/s20.png',              url: 'https://www.facebook.com/MoniqueStamByEva/',                    name: 'Monique Stam By Eva' },
     { img: 'images/sponsors/s22.png',              url: 'https://www.concreetbv.be/',                                    name: 'Concreet BV' },
-    { img: 'images/sponsors/s23.png',              url: 'https://www.facebook.com/CASTELkapellen',                       name: 'Castel Kapellen' },
     { img: 'images/sponsors/s24.png',              url: 'https://bobjanssens.com/',                                      name: 'Bob Janssens' },
     { img: 'images/sponsors/s26.png',              url: 'https://www.deveehoeve.be/',                                    name: 'De Veehoeve' },
     { img: 'images/sponsors/s28.png',              url: 'https://www.groepvanheyst.be/',                                 name: 'Groep Van Heyst' },
     { img: 'images/sponsors/direggio.png',         url: 'https://www.direggio.co/',                                      name: 'DiReggio' },
-    { img: 'images/sponsors/s31.png',              url: null, name: 'Sponsor' },
-    { img: 'images/sponsors/s32.png',              url: null, name: 'Sponsor' },
-    { img: 'images/sponsors/s35.png',              url: null, name: 'Sponsor' },
-    { img: 'images/sponsors/s36.png',              url: null, name: 'Sponsor' },
-    { img: 'images/sponsors/s37.png',              url: null, name: 'Sponsor' },
-    { img: 'images/sponsors/s38.png',              url: null, name: 'Sponsor' },
-    { img: 'images/sponsors/s39.png',              url: null, name: 'Sponsor' },
-    { img: 'images/sponsors/bestratingen_mees.png',url: null, name: 'Bestratingen Mees' },
+    { img: 'images/sponsors/s31.png',              url: 'https://koosi.be/',                                             name: 'Koosi' },
+    { img: 'images/sponsors/s32.png',              url: 'https://www.renovant.be/',                                      name: 'Renovant' },
+    { img: 'images/sponsors/s35.png',              url: 'https://www.meesters.be/',                                      name: 'Meesters Acccountants' },
+    { img: 'images/sponsors/s36.png',              url: 'https://www.stabilos.be/',                                      name: 'Stabilos' },
+    { img: 'images/sponsors/s37.png',              url: 'https://steenhouwerij-denisse.be/',                             name: 'Steenhouwerij Denisse' },
+    { img: 'images/sponsors/s38.png',              url: null,                                                            name: 'APPPS Group' },
+    { img: 'images/sponsors/s39.png',              url: 'https://www.brasserie-tkoetshuis.be/home/',                     name: '\'t Koetshuis' },
+    { img: 'images/sponsors/bestratingen_mees.png',url: 'https://www.bestratingenmees.be/',                              name: 'Bestratingen Mees' },
   ];
   const logos = sponsors.map(s =>
     s.url
