@@ -1735,6 +1735,18 @@ function panelBestuur() {
       '<p>In samenwerking met tennisschool WhackIt organiseert de club tennislessen vanaf april. Lesnemers zijn verplicht lid van de club. Betaling van lid- en lesgeld dient voor aanvang van de lessenreeks in orde te zijn; bij ontbreken van betaling wordt toegang tot de tennisvelden geweigerd. Tarieven zijn te raadplegen op <a href="https://www.tckooike.com" target="_blank">www.tckooike.com</a> of via Tennis Vlaanderen.</p>' +
       '<p style="margin-top:6px">Het organiseren van tennislessen met andere tennisleraren is toegestaan mits toestemming van het dagelijks bestuur.</p>' +
 
+      '<p style="font-weight:700;color:var(--clay-dark);margin:14px 0 4px">SPORTONGEVAL</p>' +
+      '<p>Als lid van Tennis &amp; Padel Vlaanderen bent u via de vereniging verzekerd tegen sportongevallen. De aangifte van het sportongeval wordt door de club in behandeling genomen. Bij een sportongeval dient u zo snel mogelijk (binnen 14 dagen) contact op te nemen via <a href="mailto:tckooike@gmail.com">tckooike@gmail.com</a> en de volgende gegevens te verstrekken:</p>' +
+      '<ul style="margin:8px 0 0 18px;line-height:2">' +
+        '<li>Foto identiteitskaart</li>' +
+        '<li>Woonadres</li>' +
+        '<li>Contactgegevens</li>' +
+        '<li>Aansluiting bij ziekenfonds</li>' +
+        '<li>Rekeningnummer bank</li>' +
+        '<li>Documenten van de huisarts of ziekenhuis</li>' +
+        '<li>Gedetailleerde omschrijving van het ongeval</li>' +
+      '</ul>' +
+
       '<p style="font-weight:700;color:var(--clay-dark);margin:14px 0 4px">NIET-NALEVING REGLEMENT</p>' +
       '<p>Leden die één of meerdere bepalingen van dit reglement niet naleven, kunnen door bestuursleden de toegang tot de terreinen ontzegd worden. Het bestuur kan één of meerdere maatregelen opleggen, wat kan leiden tot uitsluiting van de club en/of weigering van het lidmaatschap voor het volgende jaar.</p>' +
 
@@ -1900,7 +1912,6 @@ function panelContact() {
         '<div class="contact-block">' +
           '<a href="https://www.tennisenpadelvlaanderen.be/nl/clubdashboard/reserveer-een-terrein?clubId=2158" target="_blank">Terrein reserveren</a><br>' +
           '<a href="https://www.tennisenpadelvlaanderen.be/nl/clubdashboard/lid-worden?clubId=2158" target="_blank">Lid worden</a><br>' +
-          '<a href="https://www.padelkooike.be/" target="_blank">Padel Kooike</a>' +
         '</div>' +
       '</div>' +
     '</div>' +
