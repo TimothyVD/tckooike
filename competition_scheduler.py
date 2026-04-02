@@ -1704,7 +1704,7 @@ function panelBestuur() {
     '<div class="board-grid">' + cards + '</div>' +
     '<p class="help" style="margin-top:14px">Vragen of opmerkingen? ' +
     '<a href="mailto:tckooike@gmail.com">tckooike@gmail.com</a> · ' +
-    '<a href="tel:+32497891454">+32 497 89 14 54 (Steven)</a> · ' +
+    '<a href="tel:+32497891454">+32 497 89 14 54 (Steven)</a>' +
     '</div></div>' +
     '<div class="card" style="margin-top:16px"><div class="card-head">📋 Huishoudelijk Reglement</div><div class="card-body" style="max-height:520px;overflow-y:auto;font-size:.88rem;line-height:1.75;color:var(--text)">' +
       '<p style="font-size:.8rem;color:var(--text-muted);margin-bottom:14px">Alle leden van TC Kooike verklaren kennis te hebben genomen van het clubreglement en verplichten zich dit na te leven.</p>' +
@@ -1893,7 +1893,7 @@ function panelContact() {
       '<div class="info-card"><h3>📧 E-mail & Telefoon</h3>' +
         '<div class="contact-block">' +
           '<a href="mailto:tckooike@gmail.com">tckooike@gmail.com</a><br>' +
-          '<a href="tel:+32497891454">+32 497 89 14 54</a>' +
+          '<a href="tel:+32497891454">+32 497 89 14 54 (Steven)</a>' +
         '</div>' +
       '</div>' +
       '<div class="info-card"><h3>🔗 Handige links</h3>' +
