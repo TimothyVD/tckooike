@@ -416,9 +416,14 @@ function buildNav() {
   });
 }
 function switchTab(id) {
+  const validId = STATIC_TABS.find(t => t.id === id) ? id : STATIC_TABS[0].id;
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  const el = document.getElementById('tp-' + id);
+  const el = document.getElementById('tp-' + validId);
   if (el) el.classList.add('active');
+  document.querySelectorAll('.tab-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.tab === validId)
+  );
+  if (location.hash !== '#' + validId) history.replaceState(null, '', '#' + validId);
 }
 function buildAllPanels() {
   const root = document.getElementById('main-content');
@@ -430,7 +435,9 @@ function buildAllPanels() {
     html += '<div class="tab-panel" id="tp-' + esc(t.id) + '">' + buildStaticPanel(t.id) + '</div>';
   }
   root.innerHTML = html;
-  switchTab(STATIC_TABS[0].id);
+  const hashTab = location.hash.slice(1);
+  switchTab(hashTab || STATIC_TABS[0].id);
+  window.addEventListener('hashchange', () => switchTab(location.hash.slice(1)));
   root.querySelectorAll('.score-in').forEach(inp => inp.addEventListener('change', onScoreChange));
 }
 
