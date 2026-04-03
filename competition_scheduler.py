@@ -1856,7 +1856,6 @@ function panelInterclub() {
     const shownDate = (prefix ? prefix + ' ' : '') + String(m.datum || '');
     return '<tr>' +
       '<td>' + esc(shownDate) + '</td>' +
-      '<td>' + esc(m.reeks || '') + '</td>' +
       '<td>' + esc(m.kapitein || '') + '</td>' +
       '<td>' + fmtClub(m.ontvangende_club) + '</td>' +
       '<td>' + fmtClub(m.bezoekende_club) + '</td>' +
@@ -1871,7 +1870,7 @@ function panelInterclub() {
 
   return '<div class="card"><div class="card-head">🎾 Interclub 2026</div><div class="card-body">' +
     '<div class="tbl-wrap"><table>' +
-    '<thead><tr><th>Datum</th><th>Reeks</th><th>Kapitein</th><th>Ontvangende club</th><th>Bezoekende club</th></tr></thead>' +
+    '<thead><tr><th>Datum</th><th>Kapitein</th><th>Ontvangende club</th><th>Bezoekende club</th></tr></thead>' +
     '<tbody>' + rows + '</tbody>' +
     '</table></div>' +
     '</div></div>';
