@@ -90,6 +90,9 @@
     .tbl-wrap { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; font-size: .88rem; }
     thead th { background: var(--clay); color: #fff; padding: 9px 12px; text-align: left; font-weight: 600; white-space: nowrap; }
+    thead th select.th-filter { background: transparent; color: #fff; border: none; font: inherit; font-weight: 600; cursor: pointer; outline: none; padding: 0; margin: 0; width: 100%; appearance: none; -webkit-appearance: none; }
+    thead th select.th-filter option { background: var(--clay-dark); color: #fff; }
+    thead th.th-active-filter { background: var(--clay-dark); }
     tbody tr:nth-child(even):not(.date-row) { background: var(--clay-bg); }
     tbody tr:hover:not(.date-row) { background: #eeddd7; }
     td { padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
@@ -674,6 +677,9 @@ function applyInterclubFilters() {
 
   const empty = document.getElementById('interclub-empty-filter');
   if (empty) empty.style.display = visibleCount ? 'none' : 'block';
+
+  const th = document.getElementById('ic-th-kapitein');
+  if (th) th.classList.toggle('th-active-filter', !!capNeedle);
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -822,17 +828,18 @@ function panelInterclub() {
   }
 
   return '<div class="card"><div class="card-head">🎾 Interclub 2026</div><div class="card-body">' +
-    '<div style="display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:12px">' +
-      '<div>' +
-        '<label for="ic-filter-kapitein" style="display:block;font-size:.82rem;color:var(--text-muted);margin-bottom:4px">Filter op kapitein</label>' +
-        '<select id="ic-filter-kapitein" onchange="applyInterclubFilters()" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text)">' +
-          '<option value="">Alle kapiteins</option>' +
+    '<div class="tbl-wrap"><table>' +
+    '<thead><tr>' +
+      '<th>Datum</th>' +
+      '<th id="ic-th-kapitein">' +
+        '<select id="ic-filter-kapitein" class="th-filter" onchange="applyInterclubFilters()" title="Filter op kapitein">' +
+          '<option value="">Kapitein ▾</option>' +
           capOptions +
         '</select>' +
-      '</div>' +
-    '</div>' +
-    '<div class="tbl-wrap"><table>' +
-    '<thead><tr><th>Datum</th><th>Kapitein</th><th>Ontvangende club</th><th>Bezoekende club</th></tr></thead>' +
+      '</th>' +
+      '<th>Ontvangende club</th>' +
+      '<th>Bezoekende club</th>' +
+    '</tr></thead>' +
     '<tbody id="interclub-tbody">' + rows + '</tbody>' +
     '</table></div>' +
     '<p id="interclub-empty-filter" class="help" style="display:none;margin-top:10px">Geen wedstrijden gevonden voor deze filter.</p>' +
