@@ -1732,6 +1732,31 @@ function toggleCard(bodyId, headEl) {
   headEl.classList.toggle('collapsed', hidden);
 }
 
+function applyInterclubFilters() {
+  const capSel = document.getElementById('ic-filter-kapitein');
+  const clubInp = document.getElementById('ic-filter-club');
+  const tbody = document.getElementById('interclub-tbody');
+  if (!tbody) return;
+
+  const capNeedle = String(capSel ? capSel.value : '').toLowerCase().trim();
+  const clubNeedle = String(clubInp ? clubInp.value : '').toLowerCase().trim();
+
+  let visibleCount = 0;
+  tbody.querySelectorAll('tr').forEach(tr => {
+    const cap = tr.dataset.kapiteinNorm || '';
+    const ontv = tr.dataset.ontvNorm || '';
+    const bev = tr.dataset.bevNorm || '';
+    const okKap = !capNeedle || cap === capNeedle;
+    const okClub = !clubNeedle || ontv.includes(clubNeedle) || bev.includes(clubNeedle);
+    const show = okKap && okClub;
+    tr.style.display = show ? '' : 'none';
+    if (show) visibleCount += 1;
+  });
+
+  const empty = document.getElementById('interclub-empty-filter');
+  if (empty) empty.style.display = visibleCount ? 'none' : 'block';
+}
+
 /* ═══════════════════════════════════════════════════════
    Static club info panels — TC Kooike, Kapellen
    ═══════════════════════════════════════════════════════ */
@@ -1851,10 +1876,19 @@ function panelInterclub() {
   }).filter(x => x.dt && x.dt.getTime() >= now.getTime())
     .sort((a, b) => a.dt.getTime() - b.dt.getTime());
 
+  const capOptions = Array.from(new Set(
+    filtered.map(({ m }) => String(m.kapitein || '').trim()).filter(Boolean)
+  )).sort((a, b) => a.localeCompare(b, 'nl', { sensitivity: 'base' }))
+    .map(name => '<option value="' + esc(name.toLowerCase()) + '">' + esc(name) + '</option>')
+    .join('');
+
   const rows = filtered.map(({ m, dt }) => {
     const prefix = weekdayNl[dt.getDay()] || '';
     const shownDate = (prefix ? prefix + ' ' : '') + String(m.datum || '');
-    return '<tr>' +
+    const kapNorm = String(m.kapitein || '').toLowerCase();
+    const ontvNorm = String(m.ontvangende_club || '').toLowerCase();
+    const bevNorm = String(m.bezoekende_club || '').toLowerCase();
+    return '<tr data-kapitein-norm="' + esc(kapNorm) + '" data-ontv-norm="' + esc(ontvNorm) + '" data-bev-norm="' + esc(bevNorm) + '">' +
       '<td>' + esc(shownDate) + '</td>' +
       '<td>' + esc(m.kapitein || '') + '</td>' +
       '<td>' + fmtClub(m.ontvangende_club) + '</td>' +
@@ -1869,10 +1903,24 @@ function panelInterclub() {
   }
 
   return '<div class="card"><div class="card-head">🎾 Interclub 2026</div><div class="card-body">' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">' +
+      '<div>' +
+        '<label for="ic-filter-kapitein" style="display:block;font-size:.82rem;color:var(--text-muted);margin-bottom:4px">Filter op kapitein</label>' +
+        '<select id="ic-filter-kapitein" onchange="applyInterclubFilters()" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text)">' +
+          '<option value="">Alle kapiteins</option>' +
+          capOptions +
+        '</select>' +
+      '</div>' +
+      '<div>' +
+        '<label for="ic-filter-club" style="display:block;font-size:.82rem;color:var(--text-muted);margin-bottom:4px">Filter op club (ontvangende of bezoekende)</label>' +
+        '<input id="ic-filter-club" type="text" placeholder="Bijv. KOOIKE of STABROEK" oninput="applyInterclubFilters()" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text)">' +
+      '</div>' +
+    '</div>' +
     '<div class="tbl-wrap"><table>' +
     '<thead><tr><th>Datum</th><th>Kapitein</th><th>Ontvangende club</th><th>Bezoekende club</th></tr></thead>' +
-    '<tbody>' + rows + '</tbody>' +
+    '<tbody id="interclub-tbody">' + rows + '</tbody>' +
     '</table></div>' +
+    '<p id="interclub-empty-filter" class="help" style="display:none;margin-top:10px">Geen wedstrijden gevonden voor deze filter.</p>' +
     '</div></div>';
 }
 
