@@ -662,7 +662,7 @@ function applyInterclubFilters() {
     if (show) {
       // Re-color visible rows so filtered results are easier to scan.
       if (capNeedle) {
-        tr.style.backgroundColor = (visibleCount % 2 === 0) ? '#f7fbf1' : '#eef7de';
+        tr.style.backgroundColor = (visibleCount % 2 === 0) ? 'var(--card)' : 'var(--clay-bg)';
       } else {
         tr.style.backgroundColor = '';
       }
