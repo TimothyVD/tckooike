@@ -734,13 +734,21 @@ function panelKalender() {
 }
 
 function panelInterclub() {
+  const fmtClub = (name) => {
+    const club = String(name || '');
+    if (club.toUpperCase().includes('KOOIKE')) {
+      return '<strong>' + esc(club) + '</strong>';
+    }
+    return esc(club);
+  };
+
   const rows = (DATA.interclub_matches || []).map(m =>
     '<tr>' +
       '<td>' + esc(m.datum || '') + '</td>' +
       '<td>' + esc(m.reeks || '') + '</td>' +
       '<td>' + esc(m.kapitein || '') + '</td>' +
-      '<td>' + esc(m.ontvangende_club || '') + '</td>' +
-      '<td>' + esc(m.bezoekende_club || '') + '</td>' +
+      '<td>' + fmtClub(m.ontvangende_club) + '</td>' +
+      '<td>' + fmtClub(m.bezoekende_club) + '</td>' +
     '</tr>'
   ).join('');
 
