@@ -1736,24 +1736,30 @@ function toggleCard(bodyId, headEl) {
 }
 
 function applyInterclubFilters() {
-  const capSel = document.getElementById('ic-filter-kapitein');
-  const tbody = document.getElementById('interclub-tbody');
+  const capSel  = document.getElementById('ic-filter-kapitein');
+  const ontvSel = document.getElementById('ic-filter-ontv');
+  const bevSel  = document.getElementById('ic-filter-bev');
+  const tbody   = document.getElementById('interclub-tbody');
   if (!tbody) return;
 
-  const capNeedle = String(capSel ? capSel.value : '').toLowerCase().trim();
+  const capNeedle  = String(capSel  ? capSel.value  : '').toLowerCase().trim();
+  const ontvNeedle = String(ontvSel ? ontvSel.value : '').toLowerCase().trim();
+  const bevNeedle  = String(bevSel  ? bevSel.value  : '').toLowerCase().trim();
+  const anyFilter  = capNeedle || ontvNeedle || bevNeedle;
 
   let visibleCount = 0;
   tbody.querySelectorAll('tr').forEach(tr => {
-    const cap = tr.dataset.kapiteinNorm || '';
-    const show = !capNeedle || cap === capNeedle;
+    const cap  = tr.dataset.kapiteinNorm || '';
+    const ontv = tr.dataset.ontvNorm     || '';
+    const bev  = tr.dataset.bevNorm      || '';
+    const show = (!capNeedle  || cap  === capNeedle)
+              && (!ontvNeedle || ontv === ontvNeedle)
+              && (!bevNeedle  || bev  === bevNeedle);
     tr.style.display = show ? '' : 'none';
     if (show) {
-      // Re-color visible rows so filtered results are easier to scan.
-      if (capNeedle) {
-        tr.style.backgroundColor = (visibleCount % 2 === 0) ? 'var(--card)' : 'var(--clay-bg)';
-      } else {
-        tr.style.backgroundColor = '';
-      }
+      tr.style.backgroundColor = anyFilter
+        ? (visibleCount % 2 === 0 ? 'var(--card)' : 'var(--clay-bg)')
+        : '';
       visibleCount += 1;
     } else {
       tr.style.backgroundColor = '';
@@ -1763,8 +1769,12 @@ function applyInterclubFilters() {
   const empty = document.getElementById('interclub-empty-filter');
   if (empty) empty.style.display = visibleCount ? 'none' : 'block';
 
-  const th = document.getElementById('ic-th-kapitein');
-  if (th) th.classList.toggle('th-active-filter', !!capNeedle);
+  const thKap  = document.getElementById('ic-th-kapitein');
+  const thOntv = document.getElementById('ic-th-ontv');
+  const thBev  = document.getElementById('ic-th-bev');
+  if (thKap)  thKap.classList.toggle('th-active-filter',  !!capNeedle);
+  if (thOntv) thOntv.classList.toggle('th-active-filter', !!ontvNeedle);
+  if (thBev)  thBev.classList.toggle('th-active-filter',  !!bevNeedle);
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -1892,6 +1902,25 @@ function panelInterclub() {
     .map(name => '<option value="' + esc(name.toLowerCase()) + '">' + esc(name) + '</option>')
     .join('');
 
+  const _buildClubOptions = (key, label) => {
+    const all = Array.from(new Set(
+      filtered.map(({ m }) => String(m[key] || '').trim()).filter(Boolean)
+    ));
+    const kooike = all.filter(c => c.toUpperCase().includes('KOOIKE'))
+      .sort((a, b) => a.localeCompare(b, 'nl'));
+    const rest = all.filter(c => !c.toUpperCase().includes('KOOIKE'))
+      .sort((a, b) => a.localeCompare(b, 'nl', { sensitivity: 'base' }));
+    const divider = kooike.length && rest.length ? '<option disabled>──────────</option>' : '';
+    return [...kooike, ...rest]
+      .map((c, i) =>
+        (i === kooike.length && kooike.length && rest.length ? '<option disabled>──────────</option>' : '') +
+        '<option value="' + esc(c.toLowerCase()) + '">' + esc(c) + '</option>'
+      ).join('');
+  };
+
+  const ontvOptions = _buildClubOptions('ontvangende_club', 'Ontvangende club');
+  const bevOptions  = _buildClubOptions('bezoekende_club',  'Bezoekende club');
+
   const rows = filtered.map(({ m, dt }) => {
     const prefix = weekdayNl[dt.getDay()] || '';
     const shownDate = (prefix ? prefix + ' ' : '') + String(m.datum || '');
@@ -1922,8 +1951,18 @@ function panelInterclub() {
           capOptions +
         '</select>' +
       '</th>' +
-      '<th>Ontvangende club</th>' +
-      '<th>Bezoekende club</th>' +
+      '<th id="ic-th-ontv">' +
+        '<select id="ic-filter-ontv" class="th-filter" onchange="applyInterclubFilters()" title="Filter op ontvangende club">' +
+          '<option value="">Ontvangende club ▾</option>' +
+          ontvOptions +
+        '</select>' +
+      '</th>' +
+      '<th id="ic-th-bev">' +
+        '<select id="ic-filter-bev" class="th-filter" onchange="applyInterclubFilters()" title="Filter op bezoekende club">' +
+          '<option value="">Bezoekende club ▾</option>' +
+          bevOptions +
+        '</select>' +
+      '</th>' +
     '</tr></thead>' +
     '<tbody id="interclub-tbody">' + rows + '</tbody>' +
     '</table></div>' +
