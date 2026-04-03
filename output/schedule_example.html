@@ -649,23 +649,27 @@ function toggleCard(bodyId, headEl) {
 
 function applyInterclubFilters() {
   const capSel = document.getElementById('ic-filter-kapitein');
-  const clubInp = document.getElementById('ic-filter-club');
   const tbody = document.getElementById('interclub-tbody');
   if (!tbody) return;
 
   const capNeedle = String(capSel ? capSel.value : '').toLowerCase().trim();
-  const clubNeedle = String(clubInp ? clubInp.value : '').toLowerCase().trim();
 
   let visibleCount = 0;
   tbody.querySelectorAll('tr').forEach(tr => {
     const cap = tr.dataset.kapiteinNorm || '';
-    const ontv = tr.dataset.ontvNorm || '';
-    const bev = tr.dataset.bevNorm || '';
-    const okKap = !capNeedle || cap === capNeedle;
-    const okClub = !clubNeedle || ontv.includes(clubNeedle) || bev.includes(clubNeedle);
-    const show = okKap && okClub;
+    const show = !capNeedle || cap === capNeedle;
     tr.style.display = show ? '' : 'none';
-    if (show) visibleCount += 1;
+    if (show) {
+      // Re-color visible rows so filtered results are easier to scan.
+      if (capNeedle) {
+        tr.style.backgroundColor = (visibleCount % 2 === 0) ? '#f7fbf1' : '#eef7de';
+      } else {
+        tr.style.backgroundColor = '';
+      }
+      visibleCount += 1;
+    } else {
+      tr.style.backgroundColor = '';
+    }
   });
 
   const empty = document.getElementById('interclub-empty-filter');
@@ -818,17 +822,13 @@ function panelInterclub() {
   }
 
   return '<div class="card"><div class="card-head">🎾 Interclub 2026</div><div class="card-body">' +
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">' +
+    '<div style="display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:12px">' +
       '<div>' +
         '<label for="ic-filter-kapitein" style="display:block;font-size:.82rem;color:var(--text-muted);margin-bottom:4px">Filter op kapitein</label>' +
         '<select id="ic-filter-kapitein" onchange="applyInterclubFilters()" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text)">' +
           '<option value="">Alle kapiteins</option>' +
           capOptions +
         '</select>' +
-      '</div>' +
-      '<div>' +
-        '<label for="ic-filter-club" style="display:block;font-size:.82rem;color:var(--text-muted);margin-bottom:4px">Filter op club (ontvangende of bezoekende)</label>' +
-        '<input id="ic-filter-club" type="text" placeholder="Bijv. KOOIKE of STABROEK" oninput="applyInterclubFilters()" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text)">' +
       '</div>' +
     '</div>' +
     '<div class="tbl-wrap"><table>' +
