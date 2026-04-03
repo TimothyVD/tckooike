@@ -290,6 +290,84 @@ def load_teams(csv_path: str) -> tuple[dict[str, list[str]], pd.DataFrame]:
     return poules, team_info_df
 
 
+def load_interclub_matches(
+    candidates: list[str] | None = None,
+    club_keyword: str = "KOOIKE",
+) -> list[dict[str, str]]:
+    """Load Interclub rows from Excel and map the required website table fields."""
+    paths = candidates or [
+        "input/tv_interclub_2026.xlsx",
+        "input/tv_interclubkalender_2026.xlsx",
+    ]
+
+    xlsx_path = next((Path(p) for p in paths if Path(p).exists()), None)
+    if xlsx_path is None:
+        return []
+
+    df = pd.read_excel(xlsx_path)
+
+    def _pick_col(options: list[str]) -> str | None:
+        for opt in options:
+            if opt in df.columns:
+                return opt
+        return None
+
+    date_off_col = _pick_col(["Officiële datum", "Officiele datum", "Officiële speeldatum", "Officiele speeldatum"])
+    date_mod_col = _pick_col(["Gewijzigde datum", "Gewijzigde speeldatum"])
+    reeks_col = _pick_col(["Reeks"])
+    club_a_col = _pick_col(["Club"])
+    club_b_col = _pick_col(["Club.1"])
+    kap_a_col = _pick_col(["Kapitein"])
+    kap_b_col = _pick_col(["Kapitein.1"])
+
+    def _clean(v) -> str:
+        if pd.isna(v):
+            return ""
+        s = str(v).strip()
+        if s.lower() in {"nan", "nat"}:
+            return ""
+        return s
+
+    def _fmt_date(v) -> str:
+        if pd.isna(v):
+            return ""
+        if isinstance(v, pd.Timestamp):
+            return v.strftime("%d/%m/%Y %H:%M")
+        s = str(v).strip()
+        if s.lower() in {"nan", "nat", ""}:
+            return ""
+        return s
+
+    rows: list[dict[str, str]] = []
+    for _, row in df.iterrows():
+        club_a = _clean(row.get(club_a_col, "")) if club_a_col else ""
+        club_b = _clean(row.get(club_b_col, "")) if club_b_col else ""
+
+        # Keep only fixtures where TC Kooike appears in either club column.
+        in_a = club_keyword in club_a.upper()
+        in_b = club_keyword in club_b.upper()
+        if not (in_a or in_b):
+            continue
+
+        date_mod = _fmt_date(row.get(date_mod_col, "")) if date_mod_col else ""
+        date_off = _fmt_date(row.get(date_off_col, "")) if date_off_col else ""
+        datum = date_mod or date_off
+
+        kap_a = _clean(row.get(kap_a_col, "")) if kap_a_col else ""
+        kap_b = _clean(row.get(kap_b_col, "")) if kap_b_col else ""
+        kapitein = kap_a if in_a else (kap_b if in_b else "")
+
+        rows.append({
+            "datum": datum,
+            "reeks": _clean(row.get(reeks_col, "")) if reeks_col else "",
+            "kapitein": kapitein,
+            "ontvangende_club": club_a,
+            "bezoekende_club": club_b,
+        })
+
+    return rows
+
+
 # ── Core scheduler ─────────────────────────────────────────────────────────────
 
 def schedule(
@@ -1439,6 +1517,7 @@ const SPONSORS = [
 const STATIC_TABS = [
   { id: 'welkom',   label: '🏠 Welkom' },
   { id: 'kalender', label: '📅 Kalender' },
+  { id: 'interclub',label: '🎾 Interclub' },
   { id: 'bestuur',  label: '👥 Bestuur' },
   { id: 'sfeer',    label: '📸 Sfeerbeelden' },
   { id: 'school',   label: '🎾 Tennisschool' },
@@ -1660,6 +1739,7 @@ function buildStaticPanel(id) {
   switch (id) {
     case 'welkom':   return panelWelkom();
     case 'kalender': return panelKalender();
+    case 'interclub': return panelInterclub();
     case 'bestuur':  return panelBestuur();
     case 'sfeer':    return panelSfeer();
     case 'school':   return panelSchool();
@@ -1735,6 +1815,31 @@ function panelKalender() {
     '<p class="help" style="margin-top:14px">Terreinreservaties via ' +
     '<a href="https://www.tennisenpadelvlaanderen.be/nl/clubdashboard/reserveer-een-terrein?clubId=2158" target="_blank">Tennis &amp; Padel Vlaanderen</a>. ' +
     'Lid worden? <a href="https://www.tennisenpadelvlaanderen.be/nl/clubdashboard/lid-worden?clubId=2158" target="_blank">Schrijf je hier in</a>.</p>' +
+    '</div></div>';
+}
+
+function panelInterclub() {
+  const rows = (DATA.interclub_matches || []).map(m =>
+    '<tr>' +
+      '<td>' + esc(m.datum || '') + '</td>' +
+      '<td>' + esc(m.reeks || '') + '</td>' +
+      '<td>' + esc(m.kapitein || '') + '</td>' +
+      '<td>' + esc(m.ontvangende_club || '') + '</td>' +
+      '<td>' + esc(m.bezoekende_club || '') + '</td>' +
+    '</tr>'
+  ).join('');
+
+  if (!rows) {
+    return '<div class="card"><div class="card-head">🎾 Interclub</div><div class="card-body">' +
+      '<p class="help">Geen interclubgegevens gevonden in het Excel-bestand.</p>' +
+      '</div></div>';
+  }
+
+  return '<div class="card"><div class="card-head">🎾 Interclub 2026</div><div class="card-body">' +
+    '<div class="tbl-wrap"><table>' +
+    '<thead><tr><th>Datum</th><th>Reeks</th><th>Kapitein</th><th>Ontvangende club</th><th>Bezoekende club</th></tr></thead>' +
+    '<tbody>' + rows + '</tbody>' +
+    '</table></div>' +
     '</div></div>';
 }
 
@@ -2125,6 +2230,8 @@ def export_html(
             "team_b":  tb,
         })
 
+    interclub_matches = load_interclub_matches()
+
     data = {
         "club_name":      club_name,
         "season":         season,
@@ -2132,6 +2239,7 @@ def export_html(
         "poules":         list(poules),
         "teams_by_poule": teams_by_poule,
         "matches":        matches,
+      "interclub_matches": interclub_matches,
     }
 
     html = _HTML_TEMPLATE.replace("__SCHEDULE_DATA__", json.dumps(data, ensure_ascii=False))
