@@ -1928,8 +1928,7 @@ function panelSponsors() {
     '<p style="margin-bottom:14px;font-size:.88rem;color:var(--text-muted)">TC Kooike kan rekenen op een geweldige groep sponsors. ' +
     'Steun onze sponsors door hun logo aan te klikken!</p>' +
     '<div class="sponsor-logo-grid">' + logos + '</div>' +
-    '<p class="help" style="margin-top:16px">Wil je ook sponsor worden? ' +
-    '<a href="https://eu.jotform.com/form/250444331244346" target="_blank">Vul het sponsorformulier in</a>.</p>' +
+    '<p class="help" style="margin-top:16px">Wil je ook sponsor worden? Stuur een mailtje naar <a href="mailto:tckooike@gmail.com">tckooike@gmail.com</a> of neem contact op met Steven (<a href="tel:+32497891454">+32 497 89 14 54</a>).</p>' +
     '</div></div>';
 }
 
