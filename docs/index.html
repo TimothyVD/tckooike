@@ -734,6 +734,24 @@ function panelKalender() {
 }
 
 function panelInterclub() {
+  const parseInterclubDate = (raw) => {
+    const s = String(raw || '').trim();
+    const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2}))?$/);
+    if (!m) return null;
+    const day = Number(m[1]);
+    const month = Number(m[2]);
+    const year = Number(m[3]);
+    const hour = m[4] ? Number(m[4]) : 0;
+    const minute = m[5] ? Number(m[5]) : 0;
+    const d = new Date(year, month - 1, day, hour, minute, 0, 0);
+    if (Number.isNaN(d.getTime())) return null;
+    return d;
+  };
+
+  const weekdayNl = ['zon', 'maa', 'din', 'woe', 'don', 'vrij', 'zat'];
+
+  const now = new Date();
+
   const fmtClub = (name) => {
     const club = String(name || '');
     if (club.toUpperCase().includes('KOOIKE')) {
@@ -742,19 +760,27 @@ function panelInterclub() {
     return esc(club);
   };
 
-  const rows = (DATA.interclub_matches || []).map(m =>
-    '<tr>' +
-      '<td>' + esc(m.datum || '') + '</td>' +
+  const filtered = (DATA.interclub_matches || []).map(m => {
+    const dt = parseInterclubDate(m.datum);
+    return { m, dt };
+  }).filter(x => x.dt && x.dt.getTime() >= now.getTime())
+    .sort((a, b) => a.dt.getTime() - b.dt.getTime());
+
+  const rows = filtered.map(({ m, dt }) => {
+    const prefix = weekdayNl[dt.getDay()] || '';
+    const shownDate = (prefix ? prefix + ' ' : '') + String(m.datum || '');
+    return '<tr>' +
+      '<td>' + esc(shownDate) + '</td>' +
       '<td>' + esc(m.reeks || '') + '</td>' +
       '<td>' + esc(m.kapitein || '') + '</td>' +
       '<td>' + fmtClub(m.ontvangende_club) + '</td>' +
       '<td>' + fmtClub(m.bezoekende_club) + '</td>' +
-    '</tr>'
-  ).join('');
+    '</tr>';
+  }).join('');
 
   if (!rows) {
     return '<div class="card"><div class="card-head">🎾 Interclub</div><div class="card-body">' +
-      '<p class="help">Geen interclubgegevens gevonden in het Excel-bestand.</p>' +
+      '<p class="help">Geen toekomstige interclubgegevens gevonden in het Excel-bestand.</p>' +
       '</div></div>';
   }
 
