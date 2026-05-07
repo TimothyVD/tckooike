@@ -295,30 +295,10 @@ def load_interclub_matches(
     club_keyword: str = "KOOIKE",
 ) -> list[dict[str, str]]:
     """Load Interclub rows from Excel and map the required website table fields."""
-    paths = candidates or [
+    tv_paths = candidates or [
         "input/tv_interclub_2026.xlsx",
         "input/tv_interclubkalender_2026.xlsx",
     ]
-
-    xlsx_path = next((Path(p) for p in paths if Path(p).exists()), None)
-    if xlsx_path is None:
-        return []
-
-    df = pd.read_excel(xlsx_path)
-
-    def _pick_col(options: list[str]) -> str | None:
-        for opt in options:
-            if opt in df.columns:
-                return opt
-        return None
-
-    date_off_col = _pick_col(["Officiële datum", "Officiele datum", "Officiële speeldatum", "Officiele speeldatum"])
-    date_mod_col = _pick_col(["Gewijzigde datum", "Gewijzigde speeldatum"])
-    reeks_col = _pick_col(["Reeks"])
-    club_a_col = _pick_col(["Club"])
-    club_b_col = _pick_col(["Club.1"])
-    kap_a_col = _pick_col(["Kapitein"])
-    kap_b_col = _pick_col(["Kapitein.1"])
 
     def _clean(v) -> str:
         if pd.isna(v):
@@ -339,30 +319,127 @@ def load_interclub_matches(
         return s
 
     rows: list[dict[str, str]] = []
-    for _, row in df.iterrows():
-        club_a = _clean(row.get(club_a_col, "")) if club_a_col else ""
-        club_b = _clean(row.get(club_b_col, "")) if club_b_col else ""
 
-        # Keep only fixtures where TC Kooike appears in either club column.
-        in_a = club_keyword in club_a.upper()
-        in_b = club_keyword in club_b.upper()
-        if not (in_a or in_b):
+    # ── TV entries (Saxo Tennis / old format) ───────────────────────────────
+    xlsx_path = next((Path(p) for p in tv_paths if Path(p).exists()), None)
+    if xlsx_path is not None:
+        df = pd.read_excel(xlsx_path)
+
+        def _pick_col(options: list[str]) -> str | None:
+            for opt in options:
+                if opt in df.columns:
+                    return opt
+            return None
+
+        date_off_col = _pick_col(["Officiële datum", "Officiele datum", "Officiële speeldatum", "Officiele speeldatum"])
+        date_mod_col = _pick_col(["Gewijzigde datum", "Gewijzigde speeldatum"])
+        reeks_col    = _pick_col(["Reeks"])
+        club_a_col   = _pick_col(["Club"])
+        club_b_col   = _pick_col(["Club.1"])
+        kap_a_col    = _pick_col(["Kapitein"])
+        kap_b_col    = _pick_col(["Kapitein.1"])
+
+        for _, row in df.iterrows():
+            club_a = _clean(row.get(club_a_col, "")) if club_a_col else ""
+            club_b = _clean(row.get(club_b_col, "")) if club_b_col else ""
+            in_a = club_keyword in club_a.upper()
+            in_b = club_keyword in club_b.upper()
+            if not (in_a or in_b):
+                continue
+
+            date_mod = _fmt_date(row.get(date_mod_col, "")) if date_mod_col else ""
+            date_off = _fmt_date(row.get(date_off_col, "")) if date_off_col else ""
+            datum = date_mod or date_off
+
+            kap_a = _clean(row.get(kap_a_col, "")) if kap_a_col else ""
+            kap_b = _clean(row.get(kap_b_col, "")) if kap_b_col else ""
+            kapitein = kap_a if in_a else (kap_b if in_b else "")
+
+            rows.append({
+                "datum": datum,
+                "reeks": _clean(row.get(reeks_col, "")) if reeks_col else "",
+                "kapitein": kapitein,
+                "ontvangende_club": club_a,
+                "bezoekende_club": club_b,
+                "type": "TV",
+            })
+
+    # ── ART entries (Kalender DD / DG / DH format) ──────────────────────────
+    art_kalender = [
+        ("input/Kalender DD 2026.xlsx", "De Cuyper Natascha"),
+        ("input/Kalender DG 2026.xlsx", "Beeckman Rudi"),
+        ("input/Kalender DH 2026.xlsx", "De Rooij Paul"),
+    ]
+    for path_str, kapitein in art_kalender:
+        art_path = Path(path_str)
+        if not art_path.exists():
             continue
+        art_df = pd.read_excel(art_path)
+        home_col  = next((c for c in ["Thuis", "Thuisploeg"] if c in art_df.columns), None)
+        away_col  = "Bezoekers" if "Bezoekers" in art_df.columns else None
+        datum_col = "Datum"     if "Datum"     in art_df.columns else None
+        uur_col   = "Uur"       if "Uur"       in art_df.columns else None
+        reeks_col = "Reeks"     if "Reeks"     in art_df.columns else None
+        if not (home_col and away_col and datum_col):
+            continue
+        for _, row in art_df.iterrows():
+            home = _clean(row.get(home_col, ""))
+            away = _clean(row.get(away_col, ""))
+            if not (club_keyword in home.upper() or club_keyword in away.upper()):
+                continue
+            datum_raw = row.get(datum_col)
+            if pd.isna(datum_raw):
+                continue
+            if isinstance(datum_raw, pd.Timestamp):
+                date_str = datum_raw.strftime("%d/%m/%Y")
+            else:
+                date_str = _clean(str(datum_raw))
+            uur_raw = _clean(str(row.get(uur_col, "") or "")) if uur_col else ""
+            uur_digits = uur_raw.upper().replace("U", "").strip()
+            hour = int(uur_digits) if uur_digits.isdigit() else 14
+            datum = f"{date_str} {hour:02d}:00"
+            reeks = _clean(str(row.get(reeks_col, "") or "")) if reeks_col else ""
+            def _norm_club(name: str) -> str:
+                return "T.C. KOOIKE" if name.upper() == club_keyword else name
+            rows.append({
+                "datum": datum,
+                "reeks": reeks,
+                "kapitein": kapitein,
+                "ontvangende_club": _norm_club(home),
+                "bezoekende_club": _norm_club(away),
+                "type": "ART",
+            })
 
-        date_mod = _fmt_date(row.get(date_mod_col, "")) if date_mod_col else ""
-        date_off = _fmt_date(row.get(date_off_col, "")) if date_off_col else ""
-        datum = date_mod or date_off
+    # ── NK entries (hardcoded) ───────────────────────────────────────────────
+    def _parse_nk_club(entry: str) -> tuple[str, str]:
+        """Split 'Club Name - Kapitein Name' into (club, kapitein)."""
+        parts = entry.split(" - ", 1)
+        club = parts[0].strip()
+        kap  = parts[1].strip() if len(parts) > 1 else ""
+        if club.upper().replace(".", "").replace(" ", "") == "TCKOOIKE":
+            club = "T.C. KOOIKE"
+        return club, kap
 
-        kap_a = _clean(row.get(kap_a_col, "")) if kap_a_col else ""
-        kap_b = _clean(row.get(kap_b_col, "")) if kap_b_col else ""
-        kapitein = kap_a if in_a else (kap_b if in_b else "")
-
+    nk_fixtures = [
+        ("06/06/2026 14:00", "T.C. De Sigaar - Kathleen Nagels",      "TC Kooike - Mathyssen Ingrid"),
+        ("14/06/2026 14:00", "Merksemse TC - Kelly Van Kerckhove",     "TC Kooike - Mathyssen Ingrid"),
+        ("09/08/2026 10:00", "TC Kooike - Mathyssen Ingrid",           "TC Laagland - Sara Janssens"),
+        ("23/08/2026 10:00", "TC Kooike - Mathyssen Ingrid",           "TC Vlug Vooruit - Nicole Claessen"),
+        ("29/08/2026 14:00", "TC Laagland - Jeannine Huybrechts",      "TC Kooike - Mathyssen Ingrid"),
+        ("12/09/2026 10:00", "TC Stabroek - Bonnie Peeters",           "TC Kooike - Mathyssen Ingrid"),
+    ]
+    for datum, thuis_raw, bezoeker_raw in nk_fixtures:
+        thuis_club, thuis_kap   = _parse_nk_club(thuis_raw)
+        bezoeker_club, bez_kap  = _parse_nk_club(bezoeker_raw)
+        in_thuis    = club_keyword in thuis_club.upper()
+        kapitein_nk = thuis_kap if in_thuis else bez_kap
         rows.append({
             "datum": datum,
-            "reeks": _clean(row.get(reeks_col, "")) if reeks_col else "",
-            "kapitein": kapitein,
-            "ontvangende_club": club_a,
-            "bezoekende_club": club_b,
+            "reeks": "",
+            "kapitein": kapitein_nk,
+            "ontvangende_club": thuis_club,
+            "bezoekende_club": bezoeker_club,
+            "type": "NK",
         })
 
     return rows
@@ -1511,7 +1588,6 @@ const SPONSORS = [
   { img: 'images/sponsors/s31.png',              url: 'https://koosi.be/',                                            name: 'Koosi' },
   { img: 'images/sponsors/s32.png',              url: 'https://www.renovant.be/',                                     name: 'Renovant' },
   { img: 'images/sponsors/s35.png',              url: 'https://www.meesters.be/',                                     name: 'Meesters Acccountants' },
-  { img: 'images/sponsors/s36.png',              url: 'https://www.stabilos.be/',                                     name: 'Stabilos' },
   { img: 'images/sponsors/s37.png',              url: 'https://steenhouwerij-denisse.be/',                            name: 'Steenhouwerij Denisse' },
   { img: 'images/sponsors/s38.png',              url: null,                                                           name: 'APPPS Group' },
   { img: 'images/sponsors/s39.png',              url: 'https://www.brasserie-tkoetshuis.be/home/',                   name: '\'t Koetshuis' },
@@ -1736,23 +1812,27 @@ function toggleCard(bodyId, headEl) {
 }
 
 function applyInterclubFilters() {
+  const typeSel = document.getElementById('ic-filter-type');
   const capSel  = document.getElementById('ic-filter-kapitein');
   const ontvSel = document.getElementById('ic-filter-ontv');
   const bevSel  = document.getElementById('ic-filter-bev');
   const tbody   = document.getElementById('interclub-tbody');
   if (!tbody) return;
 
+  const typeNeedle = String(typeSel ? typeSel.value : '').toLowerCase().trim();
   const capNeedle  = String(capSel  ? capSel.value  : '').toLowerCase().trim();
   const ontvNeedle = String(ontvSel ? ontvSel.value : '').toLowerCase().trim();
   const bevNeedle  = String(bevSel  ? bevSel.value  : '').toLowerCase().trim();
-  const anyFilter  = capNeedle || ontvNeedle || bevNeedle;
+  const anyFilter  = typeNeedle || capNeedle || ontvNeedle || bevNeedle;
 
   let visibleCount = 0;
   tbody.querySelectorAll('tr').forEach(tr => {
+    const type = tr.dataset.typeNorm     || '';
     const cap  = tr.dataset.kapiteinNorm || '';
     const ontv = tr.dataset.ontvNorm     || '';
     const bev  = tr.dataset.bevNorm      || '';
-    const show = (!capNeedle  || cap  === capNeedle)
+    const show = (!typeNeedle || type === typeNeedle)
+              && (!capNeedle  || cap  === capNeedle)
               && (!ontvNeedle || ontv === ontvNeedle)
               && (!bevNeedle  || bev  === bevNeedle);
     tr.style.display = show ? '' : 'none';
@@ -1769,9 +1849,11 @@ function applyInterclubFilters() {
   const empty = document.getElementById('interclub-empty-filter');
   if (empty) empty.style.display = visibleCount ? 'none' : 'block';
 
+  const thType = document.getElementById('ic-th-type');
   const thKap  = document.getElementById('ic-th-kapitein');
   const thOntv = document.getElementById('ic-th-ontv');
   const thBev  = document.getElementById('ic-th-bev');
+  if (thType) thType.classList.toggle('th-active-filter', !!typeNeedle);
   if (thKap)  thKap.classList.toggle('th-active-filter',  !!capNeedle);
   if (thOntv) thOntv.classList.toggle('th-active-filter', !!ontvNeedle);
   if (thBev)  thBev.classList.toggle('th-active-filter',  !!bevNeedle);
@@ -1840,15 +1922,17 @@ function panelKalender() {
     { date: '8 februari 2026',       desc: 'Deadline korting lidmaatschap',    note: 'Schrijf vroeg in voor een korting op het lidgeld' },
     { date: 'Maart 2026',            desc: 'Heraanleg velden',                 note: null },
     { date: '6 april 2026',           desc: 'Start seizoen 🎉',                 note: 'Terreinreservaties via Tennis & Padel Vlaanderen' },
-    { date: '1 mei 2026',            desc: 'Dubbel gemengd dag 👫',            note: '<a href="https://docs.google.com/forms/d/e/1FAIpQLSd_iqhaNux1ese4GDZVSK1xMDTH_Ppv1lXLDc6u-yKT24G_2A/viewform?usp=publish-editor" target="_blank">Schrijf je nu hier in!</a>' },
-    { date: '12 – 21 juni 2026',     desc: 'Bring a Smile – Tornooi',         note: null },
+    { date: '1 mei 2026',            desc: 'Dubbel gemengd dag 👫',            note: null },
+    { date: '12 – 21 juni 2026',     desc: 'Bring a Smile – Tornooi',         note: '<a href="https://www.tennisenpadelvlaanderen.be/tornooi-detail?tornooiId=140736" target="_blank">Schrijf je hier in wanneer de nieuwe klassementen bekend zijn!</a>', hideAfter: '2026-06-12' },
     { date: '28 augustus 2026',      desc: 'Nacht der Dubbels 🌙',             note: null },
     { date: '5 – 20 september 2026', desc: 'Fairplay Tornooi',                note:  null },
   ];
-  const rows = events.map(e =>
-    '<div class="kal-item"><div class="kal-date">' + esc(e.date) + '</div>' +
-    '<div class="kal-desc">' + esc(e.desc) + (e.note ? '<small>' + e.note + '</small>' : '') + '</div></div>'
-  ).join('');
+  const now = new Date();
+  const rows = events.map(e => {
+    const noteVisible = e.note && !(e.hideAfter && now >= new Date(e.hideAfter));
+    return '<div class="kal-item"><div class="kal-date">' + esc(e.date) + '</div>' +
+      '<div class="kal-desc">' + esc(e.desc) + (noteVisible ? '<small>' + e.note + '</small>' : '') + '</div></div>';
+  }).join('');
   return '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px">' +
     '<img src="images/sfeer/plezier5.jpg" alt="" style="width:100%;height:180px;object-fit:cover;object-position:center top;border-radius:7px" onerror="this.style.display=\'none\'">' +
     '<img src="images/kalender/kal2.jpg" alt="" style="width:100%;height:180px;object-fit:cover;object-position:center top;border-radius:7px" onerror="this.style.display=\'none\'">' +
@@ -1921,14 +2005,22 @@ function panelInterclub() {
   const ontvOptions = _buildClubOptions('ontvangende_club', 'Ontvangende club');
   const bevOptions  = _buildClubOptions('bezoekende_club',  'Bezoekende club');
 
+  const typeOptions = Array.from(new Set(
+    filtered.map(({ m }) => String(m.type || '').trim()).filter(Boolean)
+  )).sort()
+    .map(t => '<option value="' + esc(t.toLowerCase()) + '">' + esc(t) + '</option>')
+    .join('');
+
   const rows = filtered.map(({ m, dt }) => {
     const prefix = weekdayNl[dt.getDay()] || '';
     const shownDate = (prefix ? prefix + ' ' : '') + String(m.datum || '');
-    const kapNorm = String(m.kapitein || '').toLowerCase();
+    const typeNorm = String(m.type || '').toLowerCase();
+    const kapNorm  = String(m.kapitein || '').toLowerCase();
     const ontvNorm = String(m.ontvangende_club || '').toLowerCase();
-    const bevNorm = String(m.bezoekende_club || '').toLowerCase();
-    return '<tr data-kapitein-norm="' + esc(kapNorm) + '" data-ontv-norm="' + esc(ontvNorm) + '" data-bev-norm="' + esc(bevNorm) + '">' +
+    const bevNorm  = String(m.bezoekende_club || '').toLowerCase();
+    return '<tr data-type-norm="' + esc(typeNorm) + '" data-kapitein-norm="' + esc(kapNorm) + '" data-ontv-norm="' + esc(ontvNorm) + '" data-bev-norm="' + esc(bevNorm) + '">' +
       '<td>' + esc(shownDate) + '</td>' +
+      '<td>' + esc(m.type || '') + '</td>' +
       '<td>' + esc(m.kapitein || '') + '</td>' +
       '<td>' + fmtClub(m.ontvangende_club) + '</td>' +
       '<td>' + fmtClub(m.bezoekende_club) + '</td>' +
@@ -1941,10 +2033,16 @@ function panelInterclub() {
       '</div></div>';
   }
 
-  return '<div class="card"><div class="card-head">🎾 Interclub 2026</div><div class="card-body">' +
+  return '<div class="card"><div class="card-head">🎾 Komende interclubontmoetingen</div><div class="card-body">' +
     '<div class="tbl-wrap"><table>' +
     '<thead><tr>' +
       '<th>Datum</th>' +
+      '<th id="ic-th-type">' +
+        '<select id="ic-filter-type" class="th-filter" onchange="applyInterclubFilters()" title="Filter op type">' +
+          '<option value="">Type ▾</option>' +
+          typeOptions +
+        '</select>' +
+      '</th>' +
       '<th id="ic-th-kapitein">' +
         '<select id="ic-filter-kapitein" class="th-filter" onchange="applyInterclubFilters()" title="Filter op kapitein">' +
           '<option value="">Kapitein ▾</option>' +
@@ -2045,17 +2143,27 @@ function panelBestuur() {
 
 function panelSfeer() {
   const sfeerImgs = [
-    { f: 'sfeer1',     c: 'Sfeerbeelden' }, { f: 'sfeer2',    c: '' }, { f: 'sfeer3', c: '' },
-    { f: 'sfeer4',     c: '' },             { f: 'sfeer5',    c: '' }, { f: 'sfeer6', c: '' },
-    { f: 'sfeer7',     c: '' },             { f: 'sfeer8',    c: '' },
-    { f: 'kids1',      c: 'Kids & jeugd' }, { f: 'kids2',     c: '' },
-    { f: 'plezier3',   c: 'Tennisplezier'},  { f: 'plezier4',  c: '' }, { f: 'plezier5', c: '' },
-    { f: 'competitie', c: 'Competitie' },   { f: 'groot_hart',c: '' },
-    { f: 'pink_ladies',c: '' },             { f: 'wim',       c: '' },
+    { f: 'sfeer1',        c: 'Sfeerbeelden' }, { f: 'sfeer2',    c: '' }, { f: 'sfeer3', c: '' },
+    { f: 'sfeer4',        c: '' },             { f: 'sfeer5',    c: '' }, { f: 'sfeer6', c: '' },
+    { f: 'sfeer7',        c: '' },             { f: 'sfeer8',    c: '' },
+    { f: 'kids1',         c: 'Kids & jeugd' }, { f: 'kids2',     c: '' },
+    { f: 'plezier3',      c: 'Tennisplezier'}, { f: 'plezier4',  c: '' }, { f: 'plezier5', c: '' },
+    { f: 'competitie',    c: 'Competitie' },   { f: 'groot_hart',c: '' },
+    { f: 'pink_ladies',   c: '' },             { f: 'wim',       c: '' },
+    { f: 'DG_dag_2026_1', c: 'DG-dag 2026', pos: 'center 65%' },
+                                                { f: 'DG_dag_2026_2', c: '', pos: 'center 50%' },
+    { f: 'DG_dag_2026_3', c: '' },             { f: 'DG_dag_2026_4', c: '' },
+    { f: 'DG_dag_2026_5', c: '' },             { f: 'DG_dag_2026_6', c: '' },
+    { f: 'DG_dag_2026_7', c: '' },             { f: 'DG_dag_2026_8', c: '', pos: 'center 50%' },
+    { f: 'DG_dag_2026_9', c: '', pos: 'center 55%' },
   ];
+  for (let i = sfeerImgs.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [sfeerImgs[i], sfeerImgs[j]] = [sfeerImgs[j], sfeerImgs[i]];
+  }
   const gallery = sfeerImgs.map(o =>
     '<a href="images/sfeer/full/' + o.f + '.jpg" class="lb-trigger" aria-label="' + esc(o.c || 'Sfeerbeeld') + '">' +
-    '<img src="images/sfeer/' + o.f + '.jpg" alt="' + esc(o.c) + '" onerror="this.parentElement.style.display=\'none\'">' +
+    '<img src="images/sfeer/' + o.f + '.jpg" alt="' + esc(o.c) + '"' + (o.pos ? ' style="object-position:' + o.pos + '"' : '') + ' onerror="this.parentElement.style.display=\'none\'">' +
     '</a>'
   ).join('');
   return '<div class="card"><div class="card-head">📸 Sfeerbeelden</div>' +
