@@ -1080,7 +1080,7 @@ function panelLadder() {
     '<li><strong>' + esc(f.q) + '</strong>' + esc(f.a) + '</li>'
   ).join('');
   return '<div class="card"><div class="card-head">🪜 Laddercompetitie — Hoe werkt het?</div><div class="card-body">' +
-    '<img src="images/ladder/ladder.png" alt="Laddercompetitie" class="ladder-img" onerror="this.style.display=\'none\'">' +
+    '<picture><source srcset="images/ladder/ladder.webp" type="image/webp"><img src="images/ladder/ladder.png" alt="Laddercompetitie" class="ladder-img" onerror="this.style.display=\'none\'"></picture>' +
     '<p style="margin-bottom:14px;font-size:.9rem">De laddercompetitie is een uitstekende manier om je tennisspel te verbeteren, ' +
     'andere leden te leren kennen en jezelf sportief te meten — voor elk niveau!</p>' +
     '<ul class="faq-list">' + faqHtml + '</ul>' +
