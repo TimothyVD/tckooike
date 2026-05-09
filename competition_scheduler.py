@@ -442,6 +442,26 @@ def load_interclub_matches(
             "type": "NK",
         })
 
+    # ── BC entries (Beker Claus, hardcoded) ─────────────────────────────────
+    bc_fixtures = [
+        ("15/05/2026 14:00", "Laagland",     "T.C. KOOIKE"),
+        ("28/05/2026 15:00", "TC80",         "T.C. KOOIKE"),
+        ("04/06/2026 15:00", "T.C. KOOIKE",  "Rommersheide"),
+        ("11/06/2026 15:00", "T.C. KOOIKE",  "7e Olympiade"),
+        ("16/06/2026 15:00", "Ten Hoeve",    "T.C. KOOIKE"),
+        ("25/06/2026 15:00", "T.C. KOOIKE",  "Peerdsbos"),
+        ("16/07/2026 15:00", "T.C. KOOIKE",  "Borgerweert"),
+    ]
+    for datum, thuis, bezoeker in bc_fixtures:
+        rows.append({
+            "datum": datum,
+            "reeks": "",
+            "kapitein": "Kelders Sonja",
+            "ontvangende_club": thuis,
+            "bezoekende_club": bezoeker,
+            "type": "BC",
+        })
+
     return rows
 
 
