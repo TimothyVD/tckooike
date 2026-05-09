@@ -1234,8 +1234,8 @@ function panelSfeer() {
     [sfeerImgs[i], sfeerImgs[j]] = [sfeerImgs[j], sfeerImgs[i]];
   }
   const gallery = sfeerImgs.map(o =>
-    '<a href="images/sfeer/full/' + o.f + '.jpg" class="lb-trigger" aria-label="' + esc(o.c || 'Sfeerbeeld') + '">' +
-    '<img src="images/sfeer/' + o.f + '.jpg" alt="' + esc(o.c) + '"' + (o.pos ? ' style="object-position:' + o.pos + '"' : '') + ' onerror="this.parentElement.style.display=\'none\'">' +
+    '<a href="images/sfeer/' + o.f + '.jpg" class="lb-trigger" aria-label="' + esc(o.c || 'Sfeerbeeld') + '">' +
+    '<img src="images/sfeer/thumbnails/' + o.f + '.jpg" alt="' + esc(o.c) + '"' + (o.pos ? ' style="object-position:' + o.pos + '"' : '') + ' onerror="this.parentElement.style.display=\'none\'">' +
     '</a>'
   ).join('');
   return '<div class="card"><div class="card-head">📸 Sfeerbeelden</div>' +
