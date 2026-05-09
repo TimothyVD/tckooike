@@ -1,0 +1,149 @@
+{
+  "club_name": "TC Kooike",
+  "season": "Seizoen 2026",
+  "generated": "2026-05-09",
+  "poules": [
+    "A",
+    "B"
+  ],
+  "teams_by_poule": {
+    "A": [
+      {
+        "name": "Alpha"
+      },
+      {
+        "name": "Bravo"
+      },
+      {
+        "name": "Charlie"
+      },
+      {
+        "name": "Delta"
+      }
+    ],
+    "B": [
+      {
+        "name": "Echo"
+      },
+      {
+        "name": "Foxtrot"
+      },
+      {
+        "name": "Golf"
+      },
+      {
+        "name": "Hotel"
+      }
+    ]
+  },
+  "matches": [
+    {
+      "id": "2026-05-11_19:30_Bravo_Delta",
+      "poule": "A",
+      "date": "2026-05-11",
+      "time": "19:30",
+      "terrain": "T1",
+      "team_a": "Bravo",
+      "team_b": "Delta"
+    },
+    {
+      "id": "2026-05-18_21:00_Alpha_Charlie",
+      "poule": "A",
+      "date": "2026-05-18",
+      "time": "21:00",
+      "terrain": "T1",
+      "team_a": "Alpha",
+      "team_b": "Charlie"
+    },
+    {
+      "id": "2026-06-01_18:00_Alpha_Delta",
+      "poule": "A",
+      "date": "2026-06-01",
+      "time": "18:00",
+      "terrain": "T4",
+      "team_a": "Alpha",
+      "team_b": "Delta"
+    },
+    {
+      "id": "2026-06-01_21:00_Bravo_Charlie",
+      "poule": "A",
+      "date": "2026-06-01",
+      "time": "21:00",
+      "terrain": "T3",
+      "team_a": "Bravo",
+      "team_b": "Charlie"
+    },
+    {
+      "id": "2026-06-08_19:30_Charlie_Delta",
+      "poule": "A",
+      "date": "2026-06-08",
+      "time": "19:30",
+      "terrain": "T1",
+      "team_a": "Charlie",
+      "team_b": "Delta"
+    },
+    {
+      "id": "2026-06-08_19:30_Alpha_Bravo",
+      "poule": "A",
+      "date": "2026-06-08",
+      "time": "19:30",
+      "terrain": "T2",
+      "team_a": "Alpha",
+      "team_b": "Bravo"
+    },
+    {
+      "id": "2026-05-04_18:00_Foxtrot_Golf",
+      "poule": "B",
+      "date": "2026-05-04",
+      "time": "18:00",
+      "terrain": "T4",
+      "team_a": "Foxtrot",
+      "team_b": "Golf"
+    },
+    {
+      "id": "2026-05-11_21:00_Echo_Hotel",
+      "poule": "B",
+      "date": "2026-05-11",
+      "time": "21:00",
+      "terrain": "T1",
+      "team_a": "Echo",
+      "team_b": "Hotel"
+    },
+    {
+      "id": "2026-05-18_19:30_Echo_Foxtrot",
+      "poule": "B",
+      "date": "2026-05-18",
+      "time": "19:30",
+      "terrain": "T1",
+      "team_a": "Echo",
+      "team_b": "Foxtrot"
+    },
+    {
+      "id": "2026-06-01_19:30_Echo_Golf",
+      "poule": "B",
+      "date": "2026-06-01",
+      "time": "19:30",
+      "terrain": "T1",
+      "team_a": "Echo",
+      "team_b": "Golf"
+    },
+    {
+      "id": "2026-06-01_21:00_Foxtrot_Hotel",
+      "poule": "B",
+      "date": "2026-06-01",
+      "time": "21:00",
+      "terrain": "T4",
+      "team_a": "Foxtrot",
+      "team_b": "Hotel"
+    },
+    {
+      "id": "2026-06-08_19:30_Golf_Hotel",
+      "poule": "B",
+      "date": "2026-06-08",
+      "time": "19:30",
+      "terrain": "T4",
+      "team_a": "Golf",
+      "team_b": "Hotel"
+    }
+  ]
+}
