@@ -1404,6 +1404,8 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
       .card { break-inside: avoid; }
     }
   </style>
+  <script data-goatcounter="https://tckooike.goatcounter.com/count"
+          async src="//gc.zgo.at/count.js"></script>
 </head>
 <body>
 
