@@ -1047,9 +1047,9 @@ function buildStaticPanel(id) {
 
 function panelWelkom() {
   return '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px">' +
-      '<img src="images/sfeer/tennisplezier6.jpg" alt="TC Kooike" style="width:100%;height:200px;object-fit:cover;object-position:center top;border-radius:10px" onerror="this.style.display=\'none\'">' +
-      '<img src="images/sfeer/competitie2.jpg" alt="TC Kooike" style="width:100%;height:200px;object-fit:cover;object-position:center center;border-radius:10px" onerror="this.style.display=\'none\'">' +
-      '<img src="images/sfeer/sfb13.jpg" alt="TC Kooike" style="width:100%;height:200px;object-fit:cover;object-position:center top;border-radius:10px" onerror="this.style.display=\'none\'">' +
+      '<img src="images/sfeer/thumbnails/tennisplezier6.jpg" alt="TC Kooike" style="width:100%;height:200px;object-fit:cover;object-position:center top;border-radius:10px" onerror="this.style.display=\'none\'">' +
+      '<img src="images/sfeer/thumbnails/competitie2.jpg" alt="TC Kooike" style="width:100%;height:200px;object-fit:cover;object-position:center center;border-radius:10px" onerror="this.style.display=\'none\'">' +
+      '<img src="images/sfeer/thumbnails/sfb13.jpg" alt="TC Kooike" style="width:100%;height:200px;object-fit:cover;object-position:center top;border-radius:10px" onerror="this.style.display=\'none\'">' +
     '</div>' +
     '<div class="card"><div class="card-head">🎾 TC Kooike is ...</div><div class="card-body">' +
       DATA.welkom.intro_html +
@@ -1077,7 +1077,7 @@ function panelKalender() {
       '<div class="kal-desc">' + esc(e.desc) + (noteVisible ? '<small>' + e.note + '</small>' : '') + '</div></div>';
   }).join('');
   return '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px">' +
-    '<img src="images/sfeer/plezier5.jpg" alt="" style="width:100%;height:180px;object-fit:cover;object-position:center top;border-radius:7px" onerror="this.style.display=\'none\'">' +
+    '<img src="images/sfeer/thumbnails/plezier5.jpg" alt="" style="width:100%;height:180px;object-fit:cover;object-position:center top;border-radius:7px" onerror="this.style.display=\'none\'">' +
     '<img src="images/kalender/kal2.jpg" alt="" style="width:100%;height:180px;object-fit:cover;object-position:center top;border-radius:7px" onerror="this.style.display=\'none\'">' +
     '<img src="images/kalender/kal_new.jpg" alt="" style="width:100%;height:180px;object-fit:cover;object-position:center top;border-radius:7px" onerror="this.style.display=\'none\'">' +
   '</div>' +

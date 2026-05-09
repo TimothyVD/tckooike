@@ -21,8 +21,8 @@ SCHEDULE_JSON = Path("input/schedule.json")
 OUTPUT = "docs/index.html"
 SFEER_DIR = Path("docs/images/sfeer")
 THUMB_DIR = SFEER_DIR / "thumbnails"
-THUMB_MAX = (800, 600)
-THUMB_QUALITY = 82
+THUMB_MAX = (600, 400)
+THUMB_QUALITY = 80
 
 EMPTY_SCHEDULE = {
     "club_name":      "TC Kooike",
