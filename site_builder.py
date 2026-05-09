@@ -275,6 +275,36 @@ def load_contact(path: str = "input/contact.md") -> list[dict]:
     return sections
 
 
+def load_sfeer(path: str = "input/sfeer.md") -> list[dict]:
+    """Load sfeer images from a Markdown file.
+
+    Format:
+      ## Section caption
+      - filename            (object-position defaults to unset)
+      - filename | center 65%
+    """
+    text = Path(path).read_text(encoding="utf-8")
+    images: list[dict] = []
+    for block in re.split(r'\n(?=## )', text.strip()):
+        lines = block.strip().splitlines()
+        if not lines:
+            continue
+        caption = lines[0][3:].strip() if lines[0].startswith('## ') else ''
+        first = True
+        for line in lines[1:] if lines[0].startswith('## ') else lines:
+            line = line.strip()
+            if not line.startswith('- '):
+                continue
+            parts = [p.strip() for p in line[2:].split('|')]
+            images.append({
+                "f":   parts[0],
+                "c":   caption if first else '',
+                "pos": parts[1] if len(parts) > 1 else None,
+            })
+            first = False
+    return images
+
+
 def load_interclub_matches(path: str = "input/interclub.md") -> list[dict]:
     """Load interclub matches from a Markdown file.
 
@@ -1198,21 +1228,7 @@ function panelBestuur() {
 }
 
 function panelSfeer() {
-  const sfeerImgs = [
-    { f: 'sfeer1',        c: 'Sfeerbeelden' }, { f: 'sfeer2',    c: '' }, { f: 'sfeer3', c: '' },
-    { f: 'sfeer4',        c: '' },             { f: 'sfeer5',    c: '' }, { f: 'sfeer6', c: '' },
-    { f: 'sfeer7',        c: '' },             { f: 'sfeer8',    c: '' },
-    { f: 'kids1',         c: 'Kids & jeugd' }, { f: 'kids2',     c: '' },
-    { f: 'plezier3',      c: 'Tennisplezier'}, { f: 'plezier4',  c: '' }, { f: 'plezier5', c: '' },
-    { f: 'competitie',    c: 'Competitie' },   { f: 'groot_hart',c: '' },
-    { f: 'pink_ladies',   c: '' },             { f: 'wim',       c: '' },
-    { f: 'DG_dag_2026_1', c: 'DG-dag 2026', pos: 'center 65%' },
-                                                { f: 'DG_dag_2026_2', c: '', pos: 'center 50%' },
-    { f: 'DG_dag_2026_3', c: '' },             { f: 'DG_dag_2026_4', c: '' },
-    { f: 'DG_dag_2026_5', c: '' },             { f: 'DG_dag_2026_6', c: '' },
-    { f: 'DG_dag_2026_7', c: '' },             { f: 'DG_dag_2026_8', c: '', pos: 'center 50%' },
-    { f: 'DG_dag_2026_9', c: '', pos: 'center 55%' },
-  ];
+  const sfeerImgs = DATA.sfeer || [];
   for (let i = sfeerImgs.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [sfeerImgs[i], sfeerImgs[j]] = [sfeerImgs[j], sfeerImgs[i]];
@@ -1382,6 +1398,7 @@ def build(schedule_data: dict, path: str = 'docs/index.html') -> None:
         'school':            load_school(),
         'ladder_html':       load_ladder(),
         'contact_sections':  load_contact(),
+        'sfeer':             load_sfeer(),
     }
     html = _HTML_TEMPLATE.replace('__SCHEDULE_DATA__', json.dumps(data, ensure_ascii=False))
     Path(path).write_text(html, encoding='utf-8')
