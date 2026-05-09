@@ -5,12 +5,11 @@
  * ----------
  * 1. Go to https://script.google.com and create a new project.
  * 2. Paste this entire file into the editor.
- * 3. Edit the CONFIGURATION section below (dates, times, poules).
- * 4. Run createForm() → a Google Form is created in your Drive.
- * 5. Share the form link with all team captains.
- * 6. After collecting responses, run exportToCSV().
+ * 3. Run createForm() → a Google Form is created in your Drive.
+ * 4. Share the form link with all team captains.
+ * 5. After collecting responses, run exportToCSV().
  *    Two files appear in your Google Drive root:
- *      - teams.csv            → use with --teams
+ *      - teams.csv               → use with --teams
  *      - team_availabilities.csv → use with --avail
  */
 
@@ -22,23 +21,44 @@
 const CONFIG = {
   formTitle: 'TC Kooike – Poulecompetitie 2026: Teamgegevens & Beschikbaarheid',
 
-  // Poule identifiers shown in the dropdown
   poules: ['A', 'B', 'C'],
 
-  // Match dates — add/remove rows as needed.
-  // label : shown to respondents in the form
-  // value : must be YYYY-MM-DD (used in the exported CSV)
+  // All match dates in chronological order (vr/za/zo: 26 jun → 30 aug 2026)
   dates: [
-    { label: 'ma 4 mei 2026',   value: '2026-05-04' },
-    { label: 'ma 11 mei 2026',  value: '2026-05-11' },
-    { label: 'ma 18 mei 2026',  value: '2026-05-18' },
-    { label: 'ma 25 mei 2026',  value: '2026-05-25' },
-    { label: 'ma 1 jun 2026',   value: '2026-06-01' },
-    { label: 'ma 8 jun 2026',   value: '2026-06-08' },
+    { label: 'vr 26 jun 2026', value: '2026-06-26' },
+    { label: 'za 27 jun 2026', value: '2026-06-27' },
+    { label: 'zo 28 jun 2026', value: '2026-06-28' },
+    { label: 'vr  3 jul 2026', value: '2026-07-03' },
+    { label: 'za  4 jul 2026', value: '2026-07-04' },
+    { label: 'zo  5 jul 2026', value: '2026-07-05' },
+    { label: 'vr 10 jul 2026', value: '2026-07-10' },
+    { label: 'za 11 jul 2026', value: '2026-07-11' },
+    { label: 'zo 12 jul 2026', value: '2026-07-12' },
+    { label: 'vr 17 jul 2026', value: '2026-07-17' },
+    { label: 'za 18 jul 2026', value: '2026-07-18' },
+    { label: 'zo 19 jul 2026', value: '2026-07-19' },
+    { label: 'vr 24 jul 2026', value: '2026-07-24' },
+    { label: 'za 25 jul 2026', value: '2026-07-25' },
+    { label: 'zo 26 jul 2026', value: '2026-07-26' },
+    { label: 'vr 31 jul 2026', value: '2026-07-31' },
+    { label: 'za  1 aug 2026', value: '2026-08-01' },
+    { label: 'zo  2 aug 2026', value: '2026-08-02' },
+    { label: 'vr  7 aug 2026', value: '2026-08-07' },
+    { label: 'za  8 aug 2026', value: '2026-08-08' },
+    { label: 'zo  9 aug 2026', value: '2026-08-09' },
+    { label: 'vr 14 aug 2026', value: '2026-08-14' },
+    { label: 'za 15 aug 2026', value: '2026-08-15' },
+    { label: 'zo 16 aug 2026', value: '2026-08-16' },
+    { label: 'vr 21 aug 2026', value: '2026-08-21' },
+    { label: 'za 22 aug 2026', value: '2026-08-22' },
+    { label: 'zo 23 aug 2026', value: '2026-08-23' },
+    { label: 'vr 28 aug 2026', value: '2026-08-28' },
+    { label: 'za 29 aug 2026', value: '2026-08-29' },
+    { label: 'zo 30 aug 2026', value: '2026-08-30' },
   ],
 
-  // Available time slots — must be HH:MM (used in the exported CSV)
-  times: ['18:00', '19:30', '21:00'],
+  // Time slots — same columns for every date
+  times: ['10:00', '11:30', '13:00', '14:30', '16:00', '17:30', '19:00', '20:30'],
 };
 
 
@@ -98,7 +118,7 @@ function createForm() {
     );
 
   form.addCheckboxGridItem()
-    .setTitle('Op welke data en tijdstippen ben jij beschikbaar?')
+    .setTitle('Op welke data en tijdstippen is jouw team beschikbaar?')
     .setRows(CONFIG.dates.map(d => d.label))
     .setColumns(CONFIG.times)
     .setRequired(false);
@@ -124,7 +144,7 @@ function exportToCSV() {
     return;
   }
 
-  // Build the full list of slot column headers: ['2026-05-04 18:00', ...]
+  // Build the full list of slot column headers: ['2026-06-26 10:00', ...]
   const slots = [];
   for (const d of CONFIG.dates) {
     for (const t of CONFIG.times) {
@@ -133,8 +153,8 @@ function exportToCSV() {
   }
 
   // CSV headers
-  const teamRows   = [['Team', 'Poule', 'player_1', 'tel_player_1', 'player_2', 'tel_player_2']];
-  const availRows  = [['Team', ...slots]];
+  const teamRows  = [['Team', 'Poule', 'player_1', 'tel_player_1', 'player_2', 'tel_player_2']];
+  const availRows = [['Team', ...slots]];
 
   for (const response of responses) {
     const items = response.getItemResponses();
@@ -152,8 +172,8 @@ function exportToCSV() {
         case 'Telefoonnummer speler 1':    tel1      = val; break;
         case 'Naam speler 2':              p2        = val; break;
         case 'Telefoonnummer speler 2':    tel2      = val; break;
-        case 'Op welke data en tijdstippen ben jij beschikbaar?':
-          availGrid = val;   // 2D: availGrid[dateIndex] = [selectedTime, ...]
+        case 'Op welke data en tijdstippen is jouw team beschikbaar?':
+          availGrid = val;  // 2D: availGrid[dateIndex] = [checkedTime, ...]
           break;
       }
     }
@@ -175,8 +195,8 @@ function exportToCSV() {
 
   // Write files to Drive root
   const folder = DriveApp.getRootFolder();
-  writeCSV(folder, 'teams.csv',                teamRows);
-  writeCSV(folder, 'team_availabilities.csv',  availRows);
+  writeCSV(folder, 'teams.csv',               teamRows);
+  writeCSV(folder, 'team_availabilities.csv', availRows);
 
   Logger.log('✅ Exported ' + responses.length + ' response(s) to your Drive root.');
   Logger.log('Download teams.csv and team_availabilities.csv, then run:');
@@ -196,14 +216,12 @@ function writeCSV(folder, filename, rows) {
   const csv = rows.map(row =>
     row.map(cell => {
       const s = String(cell == null ? '' : cell);
-      // Quote cells that contain commas, quotes, or newlines
       return (s.includes(',') || s.includes('"') || s.includes('\n'))
         ? '"' + s.replace(/"/g, '""') + '"'
         : s;
     }).join(',')
   ).join('\n');
 
-  // Delete existing file with the same name to avoid duplicates
   const existing = folder.getFilesByName(filename);
   while (existing.hasNext()) existing.next().setTrashed(true);
 
