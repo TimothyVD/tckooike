@@ -5,6 +5,14 @@ import re
 from datetime import date as _date
 from pathlib import Path
 
+def _strip_comments(text: str) -> str:
+    """Remove comment lines (starting with //) from markdown text."""
+    return '\n'.join(
+        line for line in text.splitlines()
+        if not line.lstrip().startswith('//')
+    )
+
+
 def _md_inline(text: str) -> str:
     """Convert inline Markdown (bold, links) to HTML."""
     def _link(m: re.Match) -> str:
@@ -144,7 +152,7 @@ def _md_to_html(text: str, *, intro_style: bool = False, br_lines: bool = False,
 
 
 def load_kalender_events(path: str = "input/kalender.md") -> list[dict]:
-    text = Path(path).read_text(encoding="utf-8")
+    text = _strip_comments(Path(path).read_text(encoding="utf-8"))
     events = []
     for block in re.split(r'\n(?=## )', text.strip()):
         lines = block.strip().splitlines()
@@ -181,7 +189,7 @@ def load_sponsors(path: str = "input/sponsors.md") -> list[dict]:
     Format:
       - Naam | images/sponsors/bestand.png | https://url   (url is optional)
     """
-    text = Path(path).read_text(encoding="utf-8")
+    text = _strip_comments(Path(path).read_text(encoding="utf-8"))
     sponsors = []
     for line in text.splitlines():
         line = line.strip()
@@ -199,7 +207,7 @@ def load_sponsors(path: str = "input/sponsors.md") -> list[dict]:
 
 
 def load_reglement(path: str = "input/reglement.md") -> str:
-    text = Path(path).read_text(encoding="utf-8")
+    text = _strip_comments(Path(path).read_text(encoding="utf-8"))
     return _md_to_html(text, intro_style=True)
 
 
@@ -209,7 +217,7 @@ def load_bestuur(path: str = "input/bestuur.md") -> list[dict]:
     Format:
       - Naam | Rol | images/bestuur/foto.jpg   (foto is optional)
     """
-    text = Path(path).read_text(encoding="utf-8")
+    text = _strip_comments(Path(path).read_text(encoding="utf-8"))
     members = []
     for line in text.splitlines():
         line = line.strip()
@@ -227,7 +235,7 @@ def load_bestuur(path: str = "input/bestuur.md") -> list[dict]:
 
 
 def load_welkom(path: str = "input/welkom.md") -> dict:
-    text = Path(path).read_text(encoding="utf-8")
+    text = _strip_comments(Path(path).read_text(encoding="utf-8"))
     parts = re.split(r'\n(?=## )', text.strip(), maxsplit=1)
     intro_html = _md_to_html(parts[0].strip(), para_style='font-size:1.05rem;line-height:1.8;')
     idx = intro_html.rfind('margin-bottom:14px')
@@ -241,7 +249,7 @@ def load_welkom(path: str = "input/welkom.md") -> dict:
 
 
 def load_school(path: str = "input/school.md") -> list[dict]:
-    text = Path(path).read_text(encoding="utf-8")
+    text = _strip_comments(Path(path).read_text(encoding="utf-8"))
     sections: list[dict] = []
     for block in re.split(r'\n(?=## )', text.strip()):
         lines = block.strip().splitlines()
@@ -258,12 +266,12 @@ def load_school(path: str = "input/school.md") -> list[dict]:
 
 
 def load_ladder(path: str = "input/ladder.md") -> str:
-    text = Path(path).read_text(encoding="utf-8")
+    text = _strip_comments(Path(path).read_text(encoding="utf-8"))
     return _md_to_html(text)
 
 
 def load_contact(path: str = "input/contact.md") -> list[dict]:
-    text = Path(path).read_text(encoding="utf-8")
+    text = _strip_comments(Path(path).read_text(encoding="utf-8"))
     sections: list[dict] = []
     for block in re.split(r'\n(?=## )', text.strip()):
         lines = block.strip().splitlines()
@@ -283,7 +291,7 @@ def load_sfeer(path: str = "input/sfeer.md") -> list[dict]:
       - filename            (object-position defaults to unset)
       - filename | center 65%
     """
-    text = Path(path).read_text(encoding="utf-8")
+    text = _strip_comments(Path(path).read_text(encoding="utf-8"))
     images: list[dict] = []
     for block in re.split(r'\n(?=## )', text.strip()):
         lines = block.strip().splitlines()
@@ -312,7 +320,7 @@ def load_interclub_matches(path: str = "input/interclub.md") -> list[dict]:
       ## TYPE | Kapitein | Reeks      (Reeks is optional)
       - DD/MM/YYYY HH:MM | Home Club | Away Club
     """
-    text = Path(path).read_text(encoding="utf-8")
+    text = _strip_comments(Path(path).read_text(encoding="utf-8"))
     rows: list[dict] = []
     for block in re.split(r'\n(?=## )', text.strip()):
         lines = block.strip().splitlines()
