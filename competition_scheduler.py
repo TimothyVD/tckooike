@@ -40,6 +40,7 @@ from __future__ import annotations
 
 import argparse
 import random
+import re
 from itertools import combinations
 from pathlib import Path
 
@@ -290,178 +291,308 @@ def load_teams(csv_path: str) -> tuple[dict[str, list[str]], pd.DataFrame]:
     return poules, team_info_df
 
 
-def load_interclub_matches(
-    candidates: list[str] | None = None,
-    club_keyword: str = "KOOIKE",
-) -> list[dict[str, str]]:
-    """Load Interclub rows from Excel and map the required website table fields."""
-    tv_paths = candidates or [
-        "input/tv_interclub_2026.xlsx",
-        "input/tv_interclubkalender_2026.xlsx",
-    ]
+def _md_inline(text: str) -> str:
+    """Convert inline Markdown (bold, links) to HTML."""
+    def _link(m: re.Match) -> str:
+        label, url = m.group(1), m.group(2)
+        target = '' if url.startswith(('mailto:', 'tel:')) else ' target="_blank"'
+        return f'<a href="{url}"{target}>{label}</a>'
+    text = re.sub(r'\[([^\]]+)\]\(([^)]+)\)', _link, text)
+    text = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', text)
+    return text
 
-    def _clean(v) -> str:
-        if pd.isna(v):
-            return ""
-        s = str(v).strip()
-        if s.lower() in {"nan", "nat"}:
-            return ""
-        return s
 
-    def _fmt_date(v) -> str:
-        if pd.isna(v):
-            return ""
-        if isinstance(v, pd.Timestamp):
-            return v.strftime("%d/%m/%Y %H:%M")
-        s = str(v).strip()
-        if s.lower() in {"nan", "nat", ""}:
-            return ""
-        return s
+def _md_to_html(text: str, *, intro_style: bool = False, br_lines: bool = False, para_style: str = '') -> str:
+    """Convert a subset of Markdown to HTML.
 
-    rows: list[dict[str, str]] = []
+    Block-level:
+      ## Heading      — bold coloured heading
+      ### Subheading  — smaller bold heading
+      ? Question      — FAQ item (answer on following lines of same block)
+      - item          — <ul> bullet list
+      | A | B | C |  — <table class="school-tbl">
+      [cta: text](u) — <a class="cta-btn"> button(s)
+      paragraph       — <p>
 
-    # ── TV entries (Saxo Tennis / old format) ───────────────────────────────
-    xlsx_path = next((Path(p) for p in tv_paths if Path(p).exists()), None)
-    if xlsx_path is not None:
-        df = pd.read_excel(xlsx_path)
+    Inline: **bold**, [text](url / mailto: / tel:)
 
-        def _pick_col(options: list[str]) -> str | None:
-            for opt in options:
-                if opt in df.columns:
-                    return opt
-            return None
+    intro_style: first paragraph gets muted small style (used by reglement).
+    br_lines: lines within a paragraph joined with <br> instead of space (used by contact).
+    para_style: extra inline CSS applied to every paragraph (e.g. font-size/line-height).
+    """
+    blocks = re.split(r'\n{2,}', text.strip())
+    out: list[str] = []
+    first_para = True
+    i = 0
 
-        date_off_col = _pick_col(["Officiële datum", "Officiele datum", "Officiële speeldatum", "Officiele speeldatum"])
-        date_mod_col = _pick_col(["Gewijzigde datum", "Gewijzigde speeldatum"])
-        reeks_col    = _pick_col(["Reeks"])
-        club_a_col   = _pick_col(["Club"])
-        club_b_col   = _pick_col(["Club.1"])
-        kap_a_col    = _pick_col(["Kapitein"])
-        kap_b_col    = _pick_col(["Kapitein.1"])
-
-        for _, row in df.iterrows():
-            club_a = _clean(row.get(club_a_col, "")) if club_a_col else ""
-            club_b = _clean(row.get(club_b_col, "")) if club_b_col else ""
-            in_a = club_keyword in club_a.upper()
-            in_b = club_keyword in club_b.upper()
-            if not (in_a or in_b):
-                continue
-
-            date_mod = _fmt_date(row.get(date_mod_col, "")) if date_mod_col else ""
-            date_off = _fmt_date(row.get(date_off_col, "")) if date_off_col else ""
-            datum = date_mod or date_off
-
-            kap_a = _clean(row.get(kap_a_col, "")) if kap_a_col else ""
-            kap_b = _clean(row.get(kap_b_col, "")) if kap_b_col else ""
-            kapitein = kap_a if in_a else (kap_b if in_b else "")
-
-            rows.append({
-                "datum": datum,
-                "reeks": _clean(row.get(reeks_col, "")) if reeks_col else "",
-                "kapitein": kapitein,
-                "ontvangende_club": club_a,
-                "bezoekende_club": club_b,
-                "type": "TV",
-            })
-
-    # ── ART entries (Kalender DD / DG / DH format) ──────────────────────────
-    art_kalender = [
-        ("input/Kalender DD 2026.xlsx", "De Cuyper Natascha"),
-        ("input/Kalender DG 2026.xlsx", "Beeckman Rudi"),
-        ("input/Kalender DH 2026.xlsx", "De Rooij Paul"),
-    ]
-    for path_str, kapitein in art_kalender:
-        art_path = Path(path_str)
-        if not art_path.exists():
+    while i < len(blocks):
+        raw = blocks[i].strip()
+        if not raw:
+            i += 1
             continue
-        art_df = pd.read_excel(art_path)
-        home_col  = next((c for c in ["Thuis", "Thuisploeg"] if c in art_df.columns), None)
-        away_col  = "Bezoekers" if "Bezoekers" in art_df.columns else None
-        datum_col = "Datum"     if "Datum"     in art_df.columns else None
-        uur_col   = "Uur"       if "Uur"       in art_df.columns else None
-        reeks_col = "Reeks"     if "Reeks"     in art_df.columns else None
-        if not (home_col and away_col and datum_col):
+        lines = raw.splitlines()
+
+        if raw.startswith('## '):
+            out.append(
+                f'<p style="font-weight:700;color:var(--clay-dark);margin:14px 0 4px">'
+                f'{_md_inline(raw[3:].strip())}</p>'
+            )
+            i += 1; continue
+
+        if raw.startswith('### '):
+            out.append(
+                f'<p style="font-size:.9rem;font-weight:700;margin:14px 0 6px;color:var(--clay-dark)">'
+                f'{_md_inline(raw[4:].strip())}</p>'
+            )
+            i += 1; continue
+
+        # FAQ: block starting with '? ' — first line is question, rest is answer
+        if raw.startswith('? '):
+            faq_items: list[str] = []
+            while i < len(blocks):
+                b = blocks[i].strip()
+                if not b.startswith('? '):
+                    break
+                blines = b.splitlines()
+                q = _md_inline(blines[0][2:].strip())
+                a = _md_inline(' '.join(l.strip() for l in blines[1:])) if len(blines) > 1 else ''
+                faq_items.append(f'<li><strong>{q}</strong>{a}</li>')
+                i += 1
+            out.append('<ul class="faq-list">' + ''.join(faq_items) + '</ul>')
             continue
-        for _, row in art_df.iterrows():
-            home = _clean(row.get(home_col, ""))
-            away = _clean(row.get(away_col, ""))
-            if not (club_keyword in home.upper() or club_keyword in away.upper()):
-                continue
-            datum_raw = row.get(datum_col)
-            if pd.isna(datum_raw):
-                continue
-            if isinstance(datum_raw, pd.Timestamp):
-                date_str = datum_raw.strftime("%d/%m/%Y")
+
+        # Bullet list
+        if all(l.strip().startswith('- ') for l in lines if l.strip()):
+            items = ''.join(
+                f'<li>{_md_inline(l.strip()[2:])}</li>' for l in lines if l.strip()
+            )
+            out.append(f'<ul style="margin:8px 0 0 18px;line-height:2">{items}</ul>')
+            i += 1; continue
+
+        # Table
+        if raw.startswith('|'):
+            rows = [
+                l for l in lines
+                if l.strip().startswith('|') and not re.match(r'^\|[\s\-|]+\|$', l.strip())
+            ]
+            if rows:
+                thead = '<tr>' + ''.join(
+                    f'<th>{_md_inline(c.strip())}</th>'
+                    for c in rows[0].strip('|').split('|')
+                ) + '</tr>'
+                tbody = ''.join(
+                    '<tr>' + ''.join(
+                        f'<td>{_md_inline(c.strip())}</td>'
+                        for c in row.strip('|').split('|')
+                    ) + '</tr>'
+                    for row in rows[1:]
+                )
+                out.append(
+                    f'<div class="tbl-wrap"><table class="school-tbl">'
+                    f'<thead>{thead}</thead><tbody>{tbody}</tbody></table></div>'
+                )
+            i += 1; continue
+
+        # Blockquote: "> text" → muted help paragraph
+        if raw.startswith('> '):
+            out.append(f'<p class="help" style="margin-top:10px">{_md_inline(raw[2:].strip())}</p>')
+            i += 1; continue
+
+        # CTA-only block: every non-empty line is [cta: label](url)
+        _cta_re = re.compile(r'^\[cta:([^\]]+)\]\(([^)]+)\)$')
+        if all(_cta_re.match(l.strip()) for l in lines if l.strip()):
+            buttons = ''.join(
+                f'<a class="cta-btn" href="{_cta_re.match(l.strip()).group(2)}" target="_blank">'
+                f'{_cta_re.match(l.strip()).group(1).strip()}</a>'
+                for l in lines if l.strip()
+            )
+            out.append(f'<div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:14px">{buttons}</div>')
+            i += 1; continue
+
+        # Regular paragraph
+        para = (
+            '<br>'.join(_md_inline(l.strip()) for l in lines if l.strip())
+            if br_lines
+            else _md_inline(raw.replace('\n', ' '))
+        )
+        if intro_style and first_para:
+            out.append(f'<p style="font-size:.8rem;color:var(--text-muted);margin-bottom:14px">{para}</p>')
+        elif para_style:
+            out.append(f'<p style="{para_style}margin-bottom:14px">{para}</p>')
+        elif first_para:
+            out.append(f'<p style="margin-bottom:14px">{para}</p>')
+        else:
+            out.append(f'<p style="margin-top:6px">{para}</p>')
+        first_para = False
+        i += 1
+
+    return ''.join(out)
+
+
+def load_kalender_events(path: str = "input/kalender.md") -> list[dict]:
+    text = Path(path).read_text(encoding="utf-8")
+    events = []
+    for block in re.split(r'\n(?=## )', text.strip()):
+        lines = block.strip().splitlines()
+        if not lines or not lines[0].startswith("## "):
+            continue
+        header = lines[0][3:]
+        if "|" in header:
+            date_part, desc_part = header.split("|", 1)
+        else:
+            date_part, desc_part = header, ""
+        date = date_part.strip()
+        desc = desc_part.strip()
+
+        body_lines = [l for l in lines[1:] if l.strip()]
+        hide_after = None
+        note_lines = []
+        for line in body_lines:
+            m = re.match(r'hide-after:\s*(\S+)', line.strip())
+            if m:
+                hide_after = m.group(1)
             else:
-                date_str = _clean(str(datum_raw))
-            uur_raw = _clean(str(row.get(uur_col, "") or "")) if uur_col else ""
-            uur_digits = uur_raw.upper().replace("U", "").strip()
-            hour = int(uur_digits) if uur_digits.isdigit() else 14
-            datum = f"{date_str} {hour:02d}:00"
-            reeks = _clean(str(row.get(reeks_col, "") or "")) if reeks_col else ""
-            def _norm_club(name: str) -> str:
-                return "T.C. KOOIKE" if name.upper() == club_keyword else name
+                note_lines.append(line.strip())
+
+        note_md = " ".join(note_lines).strip() or None
+        note_html = _md_inline(note_md) if note_md else None
+
+        events.append({"date": date, "desc": desc, "note": note_html, "hideAfter": hide_after})
+    return events
+
+
+def load_sponsors(path: str = "input/sponsors.md") -> list[dict]:
+    """Load sponsors from a Markdown file.
+
+    Format:
+      - Naam | images/sponsors/bestand.png | https://url   (url is optional)
+    """
+    text = Path(path).read_text(encoding="utf-8")
+    sponsors = []
+    for line in text.splitlines():
+        line = line.strip()
+        if not line.startswith("-"):
+            continue
+        parts = [p.strip() for p in line[1:].split("|")]
+        if len(parts) < 2:
+            continue
+        sponsors.append({
+            "name": parts[0],
+            "img":  parts[1],
+            "url":  parts[2] if len(parts) > 2 else None,
+        })
+    return sponsors
+
+
+def load_reglement(path: str = "input/reglement.md") -> str:
+    text = Path(path).read_text(encoding="utf-8")
+    return _md_to_html(text, intro_style=True)
+
+
+def load_bestuur(path: str = "input/bestuur.md") -> list[dict]:
+    """Load board members from a Markdown file.
+
+    Format:
+      - Naam | Rol | images/bestuur/foto.jpg   (foto is optional)
+    """
+    text = Path(path).read_text(encoding="utf-8")
+    members = []
+    for line in text.splitlines():
+        line = line.strip()
+        if not line.startswith("-"):
+            continue
+        parts = [p.strip() for p in line[1:].split("|")]
+        if len(parts) < 2:
+            continue
+        members.append({
+            "name": parts[0],
+            "role": parts[1],
+            "img":  parts[2] if len(parts) > 2 else None,
+        })
+    return members
+
+
+def load_welkom(path: str = "input/welkom.md") -> dict:
+    text = Path(path).read_text(encoding="utf-8")
+    parts = re.split(r'\n(?=## )', text.strip(), maxsplit=1)
+    intro_html = _md_to_html(parts[0].strip(), para_style='font-size:1.05rem;line-height:1.8;')
+    idx = intro_html.rfind('margin-bottom:14px')
+    if idx != -1:
+        intro_html = intro_html[:idx] + 'margin-bottom:4px' + intro_html[idx + 18:]
+    reserveren_html = ''
+    if len(parts) > 1:
+        body = '\n'.join(parts[1].strip().splitlines()[1:]).strip()
+        reserveren_html = _md_to_html(body, para_style='font-size:.92rem;line-height:1.8;')
+    return {"intro_html": intro_html, "reserveren_html": reserveren_html}
+
+
+def load_school(path: str = "input/school.md") -> list[dict]:
+    text = Path(path).read_text(encoding="utf-8")
+    sections: list[dict] = []
+    for block in re.split(r'\n(?=## )', text.strip()):
+        lines = block.strip().splitlines()
+        if not lines:
+            continue
+        if lines[0].startswith('## '):
+            heading = lines[0][3:].strip()
+            body = '\n'.join(lines[1:]).strip()
+        else:
+            heading = None
+            body = block.strip()
+        sections.append({"heading": heading, "html": _md_to_html(body)})
+    return sections
+
+
+def load_ladder(path: str = "input/ladder.md") -> str:
+    text = Path(path).read_text(encoding="utf-8")
+    return _md_to_html(text)
+
+
+def load_contact(path: str = "input/contact.md") -> list[dict]:
+    text = Path(path).read_text(encoding="utf-8")
+    sections: list[dict] = []
+    for block in re.split(r'\n(?=## )', text.strip()):
+        lines = block.strip().splitlines()
+        if not lines or not lines[0].startswith('## '):
+            continue
+        heading = lines[0][3:].strip()
+        body = '\n'.join(lines[1:]).strip()
+        sections.append({"heading": heading, "html": _md_to_html(body, br_lines=True)})
+    return sections
+
+
+def load_interclub_matches(path: str = "input/interclub.md") -> list[dict]:
+    """Load interclub matches from a Markdown file.
+
+    Format:
+      ## TYPE | Kapitein | Reeks      (Reeks is optional)
+      - DD/MM/YYYY HH:MM | Home Club | Away Club
+    """
+    text = Path(path).read_text(encoding="utf-8")
+    rows: list[dict] = []
+    for block in re.split(r'\n(?=## )', text.strip()):
+        lines = block.strip().splitlines()
+        if not lines or not lines[0].startswith("## "):
+            continue
+        header = [p.strip() for p in lines[0][3:].split("|")]
+        type_   = header[0] if len(header) > 0 else ""
+        kapitein = header[1] if len(header) > 1 else ""
+        reeks    = header[2] if len(header) > 2 else ""
+        for line in lines[1:]:
+            line = line.strip()
+            if not line.startswith("-"):
+                continue
+            parts = [p.strip() for p in line[1:].split("|")]
+            if len(parts) < 3:
+                continue
             rows.append({
-                "datum": datum,
-                "reeks": reeks,
-                "kapitein": kapitein,
-                "ontvangende_club": _norm_club(home),
-                "bezoekende_club": _norm_club(away),
-                "type": "ART",
+                "datum":           parts[0],
+                "reeks":           reeks,
+                "kapitein":        kapitein,
+                "ontvangende_club": parts[1],
+                "bezoekende_club": parts[2],
+                "type":            type_,
             })
-
-    # ── NK entries (hardcoded) ───────────────────────────────────────────────
-    def _parse_nk_club(entry: str) -> tuple[str, str]:
-        """Split 'Club Name - Kapitein Name' into (club, kapitein)."""
-        parts = entry.split(" - ", 1)
-        club = parts[0].strip()
-        kap  = parts[1].strip() if len(parts) > 1 else ""
-        if club.upper().replace(".", "").replace(" ", "") == "TCKOOIKE":
-            club = "T.C. KOOIKE"
-        return club, kap
-
-    nk_fixtures = [
-        ("06/06/2026 14:00", "T.C. De Sigaar - Kathleen Nagels",      "TC Kooike - Mathyssen Ingrid"),
-        ("14/06/2026 14:00", "Merksemse TC - Kelly Van Kerckhove",     "TC Kooike - Mathyssen Ingrid"),
-        ("09/08/2026 10:00", "TC Kooike - Mathyssen Ingrid",           "TC Laagland - Sara Janssens"),
-        ("23/08/2026 10:00", "TC Kooike - Mathyssen Ingrid",           "TC Vlug Vooruit - Nicole Claessen"),
-        ("29/08/2026 14:00", "TC Laagland - Jeannine Huybrechts",      "TC Kooike - Mathyssen Ingrid"),
-        ("12/09/2026 10:00", "TC Stabroek - Bonnie Peeters",           "TC Kooike - Mathyssen Ingrid"),
-    ]
-    for datum, thuis_raw, bezoeker_raw in nk_fixtures:
-        thuis_club, thuis_kap   = _parse_nk_club(thuis_raw)
-        bezoeker_club, bez_kap  = _parse_nk_club(bezoeker_raw)
-        in_thuis    = club_keyword in thuis_club.upper()
-        kapitein_nk = thuis_kap if in_thuis else bez_kap
-        rows.append({
-            "datum": datum,
-            "reeks": "",
-            "kapitein": kapitein_nk,
-            "ontvangende_club": thuis_club,
-            "bezoekende_club": bezoeker_club,
-            "type": "NK",
-        })
-
-    # ── BC entries (Beker Claus, hardcoded) ─────────────────────────────────
-    bc_fixtures = [
-        ("15/05/2026 14:00", "Laagland",     "T.C. KOOIKE"),
-        ("28/05/2026 15:00", "TC80",         "T.C. KOOIKE"),
-        ("04/06/2026 15:00", "T.C. KOOIKE",  "Rommersheide"),
-        ("11/06/2026 15:00", "T.C. KOOIKE",  "7e Olympiade"),
-        ("16/06/2026 15:00", "Ten Hoeve",    "T.C. KOOIKE"),
-        ("25/06/2026 15:00", "T.C. KOOIKE",  "Peerdsbos"),
-        ("16/07/2026 15:00", "T.C. KOOIKE",  "Borgerweert"),
-    ]
-    for datum, thuis, bezoeker in bc_fixtures:
-        rows.append({
-            "datum": datum,
-            "reeks": "",
-            "kapitein": "Kelders Sonja",
-            "ontvangende_club": thuis,
-            "bezoekende_club": bezoeker,
-            "type": "BC",
-        })
-
     return rows
 
 
@@ -1593,28 +1724,7 @@ function rankSymbol(i) { return ['🥇','🥈','🥉'][i] || String(i + 1); }
 /* ═══════════════════════════════════════════════════════
    Build UI
    ═══════════════════════════════════════════════════════ */
-const SPONSORS = [
-  { img: 'images/sponsors/s30.png',              url: 'https://www.facebook.com/Bart-Van-Den-Bosch-953637634704875/',  name: 'Bart Van Den Bosch' },
-  { img: 'images/sponsors/s08.png',              url: 'https://ensys.be/',                                             name: 'Ensys' },
-  { img: 'images/sponsors/bdvwindows.png',       url: 'https://bdvwindows.be/',                                        name: 'BDV Windows' },
-  { img: 'images/sponsors/s02.png',              url: 'https://www.vennincx.be/',                                      name: 'Vennincx' },
-  { img: 'images/sponsors/s05.png',              url: 'https://delhaizeputtekapellen.be/',                             name: 'Delhaize Putte-Kapellen' },
-  { img: 'images/sponsors/s09.png',              url: 'https://www.auctionport.be/',                                   name: 'AuctionPort' },
-  { img: 'images/sponsors/s12.png',              url: 'https://www.corpusfit.be/',                                     name: 'CorpusFit' },
-  { img: 'images/sponsors/s20.png',              url: 'https://www.facebook.com/MoniqueStamByEva/',                   name: 'Monique Stam By Eva' },
-  { img: 'images/sponsors/s22.png',              url: 'https://www.concreetbv.be/',                                   name: 'Concreet BV' },
-  { img: 'images/sponsors/s24.png',              url: 'https://bobjanssens.com/',                                     name: 'Bob Janssens' },
-  { img: 'images/sponsors/s26.png',              url: 'https://www.deveehoeve.be/',                                   name: 'De Veehoeve' },
-  { img: 'images/sponsors/s28.png',              url: 'https://www.groepvanheyst.be/',                                name: 'Groep Van Heyst' },
-  { img: 'images/sponsors/direggio.png',         url: 'https://www.direggio.co/',                                     name: 'DiReggio' },
-  { img: 'images/sponsors/s31.png',              url: 'https://koosi.be/',                                            name: 'Koosi' },
-  { img: 'images/sponsors/s32.png',              url: 'https://www.renovant.be/',                                     name: 'Renovant' },
-  { img: 'images/sponsors/s35.png',              url: 'https://www.meesters.be/',                                     name: 'Meesters Acccountants' },
-  { img: 'images/sponsors/s37.png',              url: 'https://steenhouwerij-denisse.be/',                            name: 'Steenhouwerij Denisse' },
-  { img: 'images/sponsors/s38.png',              url: null,                                                           name: 'APPPS Group' },
-  { img: 'images/sponsors/s39.png',              url: 'https://www.brasserie-tkoetshuis.be/home/',                   name: '\'t Koetshuis' },
-  { img: 'images/sponsors/bestratingen_mees.png',url: 'https://www.bestratingenmees.be/',                             name: 'Bestratingen Mees' },
-];
+const SPONSORS = DATA.sponsors || [];
 const STATIC_TABS = [
   { id: 'welkom',   label: '🏠 Welkom' },
   { id: 'kalender', label: '📅 Kalender' },
@@ -1906,49 +2016,24 @@ function panelWelkom() {
       '<img src="images/sfeer/sfb13.jpg" alt="TC Kooike" style="width:100%;height:200px;object-fit:cover;object-position:center top;border-radius:10px" onerror="this.style.display=\'none\'">' +
     '</div>' +
     '<div class="card"><div class="card-head">🎾 TC Kooike is ...</div><div class="card-body">' +
-    '<p style="font-size:1.05rem;line-height:1.8;margin-bottom:14px">' +
-        '\u2026 een club <strong>voor iedereen</strong>. Of je nu net begint, al jaren speelt of gewoon graag een balletje slaat \u2014 bij TC Kooike voel je je meteen thuis. ' +
-        'Onze club telt leden van alle leeftijden en niveaus, verenigd door \u00e9\u00e9n passie: de liefde voor tennis.</p>' +
-        '<p style="font-size:1.05rem;line-height:1.8;margin-bottom:14px">' +
-        '\u2026 een club waar <strong>tennisplezier heerst</strong>. Van ontspannen dubbels op zondagochtend tot spannende competitiematchen \u2014 de glimlach op de baan is altijd het grootste. ' +
-        'Naast het tennis zorgen we ook voor gezelligheid buiten de lijnen: clubactiviteiten, tornooien en een warm clubgevoel het hele jaar door.</p>' +
-        '<p style="font-size:1.05rem;line-height:1.8;margin-bottom:14px">' +
-        '\u2026 een club <strong>van winnaars</strong>. Onze leden schitteren seizoen na seizoen in de interclub \u2014 maar winnen staat bij ons nooit boven het plezier. ' +
-        'Wie wil groeien, vindt bij ons de perfecte omgeving: professionele tennislessen via WhackIt, laddercompetitie voor extra uitdaging en ervaren medespelers die je graag verder helpen.</p>' +
-        '<p style="font-size:1.05rem;line-height:1.8">' +
-        '\u2026 maar bovenal een club met een heel groot <strong>\u2764\ufe0f</strong>. TC Kooike is meer dan een tennisclub \u2014 het is een gemeenschap. ' +
-        'Een plek waar vriendschappen worden gesmeed, herinneringen worden gemaakt en iedereen altijd welkom is.</p>' +
+      DATA.welkom.intro_html +
     '</div></div>' +
     '<div class="welkom-bottom-grid" style="display:grid;grid-template-columns:2fr 1fr;gap:16px;align-items:stretch">' +
-    '<div class="card" style="margin-bottom:0"><div class="card-head">🎾 Hoe reserveren?</div><div class="card-body">' +
-    '<p style="font-size:.92rem;line-height:1.8;margin-bottom:10px">' +
-    'TC Kooike is gevestigd in <strong>Kapellen</strong>, met meerdere buitenterreinen en padelvelden. ' +
-    'Terreinreservaties verlopen eenvoudig via Tennis &amp; Padel Vlaanderen.</p>' +
-    '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:14px">' +
-    '<a href="https://www.tennisenpadelvlaanderen.be/nl/clubdashboard/reserveer-een-terrein?clubId=2158" target="_blank" class="cta-btn">🎾 Reserveer een terrein</a>' +
-    '<a href="https://www.tennisenpadelvlaanderen.be/nl/clubdashboard/lid-worden?clubId=2158" target="_blank" class="cta-btn">✅ Word lid</a>' +
-    '</div>' +
-    '</div></div>' +
-    '<div class="card" style="margin-bottom:0;overflow:hidden;display:flex;flex-direction:column"><div class="card-head">🤝 Sponsors</div><div class="card-body" style="padding:12px;flex:1;display:flex;align-items:stretch">' +
-    (function() {
-      const shuffled = [...SPONSORS].sort(() => Math.random() - 0.5);
-      const track = shuffled.map(s => '<img src="' + s.img + '" alt="' + s.name + '" title="' + s.name + '" onerror="this.style.display=\'none\'">' ).join('');
-      return '<div class="marquee-wrap"><div class="marquee-track">' + track + track + '</div></div>';
-    })() +
-    '</div></div>' +
+      '<div class="card" style="margin-bottom:0"><div class="card-head">🎾 Hoe reserveren?</div><div class="card-body">' +
+        DATA.welkom.reserveren_html +
+      '</div></div>' +
+      (function() {
+        const shuffled = [...SPONSORS].sort(() => Math.random() - 0.5);
+        const track = shuffled.map(s => '<img src="' + s.img + '" alt="' + s.name + '" title="' + s.name + '" onerror="this.style.display=\'none\'">').join('');
+        return '<div class="card" style="margin-bottom:0;overflow:hidden;display:flex;flex-direction:column"><div class="card-head">🤝 Sponsors</div><div class="card-body" style="padding:12px;flex:1;display:flex;align-items:stretch">' +
+          '<div class="marquee-wrap"><div class="marquee-track">' + track + track + '</div></div>' +
+          '</div></div>';
+      })() +
     '</div>';
 }
 
 function panelKalender() {
-  const events = [
-    { date: '8 februari 2026',       desc: 'Deadline korting lidmaatschap',    note: 'Schrijf vroeg in voor een korting op het lidgeld' },
-    { date: 'Maart 2026',            desc: 'Heraanleg velden',                 note: null },
-    { date: '6 april 2026',           desc: 'Start seizoen 🎉',                 note: 'Terreinreservaties via Tennis & Padel Vlaanderen' },
-    { date: '1 mei 2026',            desc: 'Dubbel gemengd dag 👫',            note: null },
-    { date: '12 – 21 juni 2026',     desc: 'Bring a Smile – Tornooi',         note: '<a href="https://www.tennisenpadelvlaanderen.be/tornooi-detail?tornooiId=140736" target="_blank">Schrijf je hier in wanneer de nieuwe klassementen bekend zijn!</a>', hideAfter: '2026-06-12' },
-    { date: '28 augustus 2026',      desc: 'Nacht der Dubbels 🌙',             note: null },
-    { date: '5 – 20 september 2026', desc: 'Fairplay Tornooi',                note:  null },
-  ];
+  const events = DATA.kalender_events || [];
   const now = new Date();
   const rows = events.map(e => {
     const noteVisible = e.note && !(e.hideAfter && now >= new Date(e.hideAfter));
@@ -2091,14 +2176,7 @@ function panelInterclub() {
 }
 
 function panelBestuur() {
-  const board = [
-    { name: 'Timothy Van Daele',    role: 'Voorzitter & elit verantwoordelijke',                    img: 'images/bestuur/timothy.jpg' },
-    { name: 'Anouk Van den Branden',role: 'Secretaris, elit verantwoordelijke & tennisschool',      img: 'images/bestuur/anouk.jpg' },
-    { name: 'Philip Somers',        role: 'Penningmeester & aanspreekpunt padel',                   img: 'images/bestuur/philip.jpg' },
-    { name: 'Jan Viroux',           role: 'Bestuurslid, tennisschool & aanspreekpunt padel',        img: 'images/bestuur/jan.jpg' },
-    { name: 'Steven De Cuyper',     role: 'Sponsoring, beheer & organisatie events',                img: 'images/bestuur/steven.jpg' },
-    { name: 'Glen Van Dyck',        role: 'Bestuurslid, beheer & organisatie events',               img: 'images/bestuur/glen.jpg' },
-  ];
+  const board = DATA.bestuur || [];
   const initials = name => name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
   const cards = board.map(b =>
     '<div class="board-card">' +
@@ -2117,49 +2195,7 @@ function panelBestuur() {
     '<a href="tel:+32497891454">+32 497 89 14 54 (Steven)</a>' +
     '</div></div>' +
     '<div class="card" style="margin-top:16px"><div class="card-head">📋 Huishoudelijk Reglement</div><div class="card-body" style="max-height:520px;overflow-y:auto;font-size:.88rem;line-height:1.75;color:var(--text)">' +
-      '<p style="font-size:.8rem;color:var(--text-muted);margin-bottom:14px">Alle leden van TC Kooike verklaren kennis te hebben genomen van het clubreglement en verplichten zich dit na te leven.</p>' +
-
-      '<p style="font-weight:700;color:var(--clay-dark);margin:14px 0 4px">LIDMAATSCHAP</p>' +
-      '<p>Leden kunnen hun lidmaatschap jaarlijks verlengen via de website van Tennis Vlaanderen. De inschrijving is pas definitief zodra de betaling volledig is verwerkt en goedgekeurd door de club.</p>' +
-      '<p style="margin-top:6px">De actuele bedragen voor de lidgelden en eventuele kortingen worden aan het begin van het seizoen aan de leden verstrekt en zijn tevens te raadplegen op de websites van de club en Tennis Vlaanderen. Het dagelijks bestuur behoudt zich het recht voor om de lidgelden jaarlijks aan te passen; dit wordt gepresenteerd op het infomoment in november.</p>' +
-      '<p style="margin-top:6px">Nieuwe leden kunnen zich inschrijven via Tennis Vlaanderen onder de tab &lsquo;Tarieven&rsquo;. De verwerkingstijd bedraagt circa 5 werkdagen.</p>' +
-
-      '<p style="font-weight:700;color:var(--clay-dark);margin:14px 0 4px">TERREINEN</p>' +
-      '<p>De club beschikt over vier tennisterreinen met gravelondergrond, toegankelijk van april tot oktober. Het gebruik is, na reservering, voorbehouden aan spelende leden (betaald lidmaatschap) en gastspelers (€&nbsp;5,00/speler/uur of €&nbsp;15 per terrein).</p>' +
-      '<p style="margin-top:6px">Bij overvloedige regenval is spelen niet toegestaan ter bescherming van de ondergrond. Het bestuur kan terreinen preventief sluiten en reservaties annuleren. De terreinen mogen uitsluitend betreden worden met gepaste schoenen.</p>' +
-
-      '<p style="font-weight:700;color:var(--clay-dark);margin:14px 0 4px">RESERVATIES</p>' +
-      '<p>Reservatiezones: Terrein 1, 2 &amp; 3 &mdash; 90 minuten &bull; Terrein 4 &mdash; 60 minuten.</p>' +
-      '<p style="margin-top:6px">Na elk speelmoment dient het terrein geveegd en (indien nodig) besproeid te worden. Afval hoort in de vuilnisbakken.</p>' +
-      '<p style="margin-top:6px">In de <strong>avondzone</strong> is 1 reservatie per 7 dagen toegestaan; in de <strong>dagzone</strong> 2 reservaties per 7 dagen (onafhankelijk van elkaar). Jeugdleden (&lt;&nbsp;18 jaar) kunnen enkel op de dag zelf (8 uur van tevoren) een terrein in de avondzone reserveren.</p>' +
-      '<p style="margin-top:6px">Het bestuur behoudt zich het recht voor om terreinen te reserveren. Voorrang op vrije reservaties hebben: competitie-ontmoetingen (Interclub, ART, Noorderkempen, Beker Claus), tornooien, tennislessen, clubdagen/-activiteiten en onderhoud.</p>' +
-
-      '<p style="font-weight:700;color:var(--clay-dark);margin:14px 0 4px">GASTSPELER(S)</p>' +
-      '<p>Een gastspeler betaalt vooraf €&nbsp;5,00 per persoon of €&nbsp;15 per terrein via het automatische betaalsysteem gekoppeld aan de reservatie.</p>' +
-
-      '<p style="font-weight:700;color:var(--clay-dark);margin:14px 0 4px">ACCOMMODATIE &amp; KLEEDKAMERS</p>' +
-      '<p>Bij beschadiging of defecten aan de accommodatie (netten, veegmatten, sproeisysteem, verlichting) dient dit zo spoedig mogelijk gemeld te worden aan een bestuurslid of de terreinverantwoordelijke. Elk lid is verantwoordelijk voor schade die hij/zij veroorzaakt.</p>' +
-      '<p style="margin-top:6px">Zorg ervoor dat douches en kleedkamers netjes worden achtergelaten. De club is niet verantwoordelijk voor diefstal van persoonlijke spullen. Gelieve elke overtreding onmiddellijk aan een bestuurslid te melden. Tijdens sluitingstijden of privé-feesten van Bar Castel dient u de achteringang te gebruiken.</p>' +
-
-      '<p style="font-weight:700;color:var(--clay-dark);margin:14px 0 4px">TENNISLESSEN</p>' +
-      '<p>In samenwerking met tennisschool WhackIt organiseert de club tennislessen vanaf april. Lesnemers zijn verplicht lid van de club. Betaling van lid- en lesgeld dient voor aanvang van de lessenreeks in orde te zijn; bij ontbreken van betaling wordt toegang tot de tennisvelden geweigerd. Tarieven zijn te raadplegen op <a href="https://www.tckooike.com" target="_blank">www.tckooike.com</a> of via Tennis Vlaanderen.</p>' +
-      '<p style="margin-top:6px">Het organiseren van tennislessen met andere tennisleraren is toegestaan mits toestemming van het dagelijks bestuur.</p>' +
-
-      '<p style="font-weight:700;color:var(--clay-dark);margin:14px 0 4px">SPORTONGEVAL</p>' +
-      '<p>Als lid van Tennis &amp; Padel Vlaanderen bent u via de vereniging verzekerd tegen sportongevallen. De aangifte van het sportongeval wordt door de club in behandeling genomen. Bij een sportongeval dient u zo snel mogelijk (binnen 14 dagen) contact op te nemen via <a href="mailto:tckooike@gmail.com">tckooike@gmail.com</a> en de volgende gegevens te verstrekken:</p>' +
-      '<ul style="margin:8px 0 0 18px;line-height:2">' +
-        '<li>Foto identiteitskaart</li>' +
-        '<li>Woonadres</li>' +
-        '<li>Contactgegevens</li>' +
-        '<li>Aansluiting bij ziekenfonds</li>' +
-        '<li>Rekeningnummer bank</li>' +
-        '<li>Documenten van de huisarts of ziekenhuis</li>' +
-        '<li>Gedetailleerde omschrijving van het ongeval</li>' +
-      '</ul>' +
-
-      '<p style="font-weight:700;color:var(--clay-dark);margin:14px 0 4px">NIET-NALEVING REGLEMENT</p>' +
-      '<p>Leden die één of meerdere bepalingen van dit reglement niet naleven, kunnen door bestuursleden de toegang tot de terreinen ontzegd worden. Het bestuur kan één of meerdere maatregelen opleggen, wat kan leiden tot uitsluiting van de club en/of weigering van het lidmaatschap voor het volgende jaar.</p>' +
-
+      DATA.reglement_html +
       '</div></div>';
 }
 
@@ -2197,78 +2233,24 @@ function panelSfeer() {
 }
 
 function panelSchool() {
+  const sections = DATA.school || [];
+  const cards = sections.map(s =>
+    '<div class="card" style="margin-bottom:16px">' +
+    (s.heading ? '<div class="card-head">' + esc(s.heading) + '</div>' : '') +
+    '<div class="card-body">' + s.html + '</div>' +
+    '</div>'
+  ).join('');
   return '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px">' +
     '<img src="images/school/whackit.jpg" alt="WhackIt" style="width:100%;height:180px;object-fit:contain;background:#f9f9f9;border-radius:10px" onerror="this.style.display=\'none\'">' +
     '<img src="images/school/school3.jpg" alt="" style="width:100%;height:180px;object-fit:cover;object-position:center top;border-radius:10px" onerror="this.style.display=\'none\'">' +
     '<img src="images/school/school4.jpg" alt="" style="width:100%;height:180px;object-fit:cover;object-position:center top;border-radius:10px" onerror="this.style.display=\'none\'">' +
-  '</div>' +
-  '<div class="card" style="margin-bottom:16px"><div class="card-head">🎾 Tennisschool TC Kooike &times; WhackIt</div><div class="card-body">' +
-    '<div>' +
-        '<p style="font-size:.95rem;line-height:1.8;margin-bottom:12px">' +
-        'TC Kooike organiseert, in samenwerking met tennisschool <strong>WhackIt</strong>, tennislessen die van start gaan in de <strong>week van 20 april 2026</strong>. ' +
-        'Deze lessen zijn beschikbaar voor zowel jeugd als volwassenen.</p>' +
-        '<p style="font-size:.9rem;font-weight:700;margin-bottom:6px;color:var(--clay-dark)">Wat bieden wij?</p>' +
-        '<ul style="font-size:.9rem;line-height:2;margin:0 0 12px 18px;color:var(--text)">' +
-          '<li><strong>Jeugdlessen</strong> – Voor zowel beginners als gevorderden.</li>' +
-          '<li><strong>Competitielessen</strong> – Voor de echte wedstrijdspelers.</li>' +
-          '<li><strong>Kleine groepen</strong> – Max. 4 spelers per trainer, persoonlijke aandacht.</li>' +
-          '<li><strong>Leuke &amp; uitdagende trainingen</strong> – Tennis voor zowel plezier als groei!</li>' +
-        '</ul>' +
-        '<p style="font-size:.9rem;font-weight:700;margin-bottom:6px;color:var(--clay-dark)">Waarom kiezen voor TC Kooike?</p>' +
-        '<ul style="font-size:.9rem;line-height:2;margin:0 0 0 18px;color:var(--text)">' +
-          '<li>✅ Gediplomeerde en enthousiaste trainers</li>' +
-          '<li>✅ Flexibele lesroosters, afgestemd op uw agenda</li>' +
-          '<li>✅ Van basistechniek naar echte competitie</li>' +
-        '</ul>' +
-      '</div>' +
-    '</div></div>' +
-    '<div class="card"><div class="card-head">👧 Kids &amp; Tieners</div><div class="card-body">' +
-    '<div class="tbl-wrap"><table class="school-tbl"><thead><tr><th>Groep</th><th>Formule</th><th>Prijs</th></tr></thead><tbody>' +
-    '<tr><td>Blauw (4–5 jaar)</td><td>1u/week · 8 lessen</td><td>€100</td></tr>' +
-    '<tr><td>Rood (6–8 jaar)</td><td>1u/week · 8 lessen</td><td>€100</td></tr>' +
-    '<tr><td>Oranje (9–10 jaar)</td><td>1u/week · 8 lessen</td><td>€100</td></tr>' +
-    '<tr><td>Groen (11–12 jaar)</td><td>1u/week · 8 lessen</td><td>€100</td></tr>' +
-    '<tr><td>Geel – Tieners (13–18 j)</td><td>1u/week · 8 lessen</td><td>€100</td></tr>' +
-    '<tr><td>Privé (1 speler)</td><td>1u/week · 8 lessen</td><td>€280</td></tr>' +
-    '<tr><td>Privé (2 spelers)</td><td>1u/week · 8 lessen</td><td>€140 pp</td></tr>' +
-    '</tbody></table></div>' +
-    '<p class="help" style="margin-top:10px">Lessen op <strong>woensdagnamiddag</strong> (14u–18u) en <strong>zaterdag</strong> (10u–13u). ' +
-    'Max. 4 spelers per trainer. Bij regenweer wordt de les uitgesteld.</p>' +
-    '</div></div>' +
-    '<div class="card"><div class="card-head">🧑 Volwassenen</div><div class="card-body">' +
-    '<div class="tbl-wrap"><table class="school-tbl"><thead><tr><th>Formule</th><th>Omschrijving</th><th>Prijs</th></tr></thead><tbody>' +
-    '<tr><td>Groepslessen beginners</td><td>1u/week · 8 lessen</td><td>€110 pp</td></tr>' +
-    '<tr><td>Groepslessen (half-)gevorderden</td><td>1u/week · 8 lessen</td><td>€110 pp</td></tr>' +
-    '<tr><td>Privé (1 speler)</td><td>1u/week · 8 lessen</td><td>€280</td></tr>' +
-    '<tr><td>Privé (2 spelers)</td><td>1u/week · 8 lessen</td><td>€140 pp</td></tr>' +
-    '<tr><td>Dubbeltraining (per 4)</td><td>Groep of individueel inschrijven</td><td>Op aanvraag</td></tr>' +
-    '</tbody></table></div>' +
-    '<p class="help" style="margin-top:10px">Groepslessen vereisen min. 3 spelers. Dubbeltraining ook individueel in te schrijven — TC Kooike stelt dan een groep samen op niveau.</p>' +
-    '</div></div>' +
-    '<a class="cta-btn" href="https://www.tennisenpadelvlaanderen.be/nl/clubdashboard/doelgroep-details?clubId=2158&aanbodId=8043&doelgroepId=35211" target="_blank">✏️ Inschrijven tennisschool</a>';
+  '</div>' + cards;
 }
 
 function panelLadder() {
-  const faq = [
-    { q: 'Wat is de laddercompetitie?', a: 'Een leuke manier om jezelf sportief te meten met anderen. De lager geplaatste speler daagt een hoger geplaatste uit. Als de uitdager wint, stijgt zijn positie. Je eindpositie bepaalt de winnaar van het seizoen.' },
-    { q: 'Hoe schrijf ik me in?', a: 'Via de website van Sportconnexions kun je inschrijven en aanduiden wanneer je beschikbaar bent en hoe snel het systeem wedstrijden mag inplannen.' },
-    { q: 'Hoe daag ik een speler uit?', a: 'Het systeem loot zelf de wedstrijden — je hoeft niemand zelf uit te dagen.' },
-    { q: 'Hoe plan ik een wedstrijd in?', a: 'Reserveer een baan via de app of website van Tennis & Padel Vlaanderen.' },
-    { q: 'Wat telt als wedstrijd?', a: 'Je speelt 1–1,5 uur inclusief 5 min inspelen. Tel de games door. Bij gelijke stand na 1 uur speel je nog 1 beslissende game.' },
-    { q: 'Waar voer ik de uitslag in?', a: 'In de laddercompetitie onder \'Wedstrijden\'. Doe dit binnen 10 dagen na de wedstrijd.' },
-    { q: 'Wat als een speler geblesseerd raakt?', a: 'De tegenpartij wint de wedstrijd.' },
-    { q: 'Wat als de score niet op tijd ingevuld is?', a: 'De eerstgenoemde speler zakt 1 plek. Neem tijdig contact op om dit te vermijden.' },
-    { q: 'Wanneer kan ik spelen?', a: 'Elke dag. Overdag en in het weekend is er meer beschikbaarheid. Doordeweekse avonden zijn doorgaans drukker.' },
-  ];
-  const faqHtml = faq.map(f =>
-    '<li><strong>' + esc(f.q) + '</strong>' + esc(f.a) + '</li>'
-  ).join('');
   return '<div class="card"><div class="card-head">🪜 Laddercompetitie — Hoe werkt het?</div><div class="card-body">' +
     '<picture><source srcset="images/ladder/ladder.webp" type="image/webp"><img src="images/ladder/ladder.png" alt="Laddercompetitie" class="ladder-img" onerror="this.style.display=\'none\'"></picture>' +
-    '<p style="margin-bottom:14px;font-size:.9rem">De laddercompetitie is een uitstekende manier om je tennisspel te verbeteren, ' +
-    'andere leden te leren kennen en jezelf sportief te meten — voor elk niveau!</p>' +
-    '<ul class="faq-list">' + faqHtml + '</ul>' +
-    '<a class="cta-btn" href="https://sportconnexions.com/nl/tennis/leagues/2556/" target="_blank">🪜 Inschrijven laddercompetitie</a>' +
+    DATA.ladder_html +
     '</div></div>';
 }
 
@@ -2295,31 +2277,20 @@ function panelSponsors() {
 }
 
 function panelContact() {
+  const sections = DATA.contact_sections || [];
+  const cards = sections.map(s =>
+    '<div class="info-card"><h3>' + esc(s.heading) + '</h3>' +
+    '<div class="contact-block">' + s.html + '</div></div>'
+  ).join('');
   return '<div class="card"><div class="card-head">📞 Contact & Locatie — TC Kooike</div><div class="card-body">' +
-    '<div class="info-grid">' +
-      '<div class="info-card"><h3>📍 Adres</h3>' +
-        '<div class="contact-block"><strong>TC Kooike</strong><br>Ertbrandstraat 58<br>2920 Kapellen</div>' +
-        '<p class="help" style="margin-top:8px">Voldoende parking bij sporthal \'t Kooike.</p>' +
-      '</div>' +
-      '<div class="info-card"><h3>📧 E-mail & Telefoon</h3>' +
-        '<div class="contact-block">' +
-          '<a href="mailto:tckooike@gmail.com">tckooike@gmail.com</a><br>' +
-          '<a href="tel:+32497891454">+32 497 89 14 54 (Steven)</a>' +
-        '</div>' +
-      '</div>' +
-      '<div class="info-card"><h3>🔗 Handige links</h3>' +
-        '<div class="contact-block">' +
-          '<a href="https://www.tennisenpadelvlaanderen.be/nl/clubdashboard/reserveer-een-terrein?clubId=2158" target="_blank">Terrein reserveren</a><br>' +
-          '<a href="https://www.tennisenpadelvlaanderen.be/nl/clubdashboard/lid-worden?clubId=2158" target="_blank">Lid worden</a><br>' +
-        '</div>' +
-      '</div>' +
-    '</div>' +
+    '<div class="info-grid">' + cards + '</div>' +
     '<div style="margin-top:14px;border-radius:8px;overflow:hidden;border:1px solid var(--border)">' +
     '<iframe src="https://www.google.com/maps?q=Ertbrandstraat+58,+2920+Kapellen,+Belgium&output=embed" ' +
     'width="100%" height="320" style="border:0;display:block" allowfullscreen loading="lazy"></iframe>' +
     '</div>' +
     '</div></div>';
 }
+
 
 /* ═══════════════════════════════════════════════════════
    Event handling
@@ -2488,15 +2459,31 @@ def export_html(
         })
 
     interclub_matches = load_interclub_matches()
+    kalender_events = load_kalender_events()
+    sponsors = load_sponsors()
+    reglement_html = load_reglement()
+    bestuur = load_bestuur()
+    welkom = load_welkom()
+    school = load_school()
+    ladder_html = load_ladder()
+    contact_sections = load_contact()
 
     data = {
-        "club_name":      club_name,
-        "season":         season,
-        "generated":      str(_date.today()),
-        "poules":         list(poules),
-        "teams_by_poule": teams_by_poule,
-        "matches":        matches,
-      "interclub_matches": interclub_matches,
+        "club_name":         club_name,
+        "season":            season,
+        "generated":         str(_date.today()),
+        "poules":            list(poules),
+        "teams_by_poule":    teams_by_poule,
+        "matches":           matches,
+        "interclub_matches": interclub_matches,
+        "kalender_events":   kalender_events,
+        "sponsors":          sponsors,
+        "reglement_html":    reglement_html,
+        "bestuur":           bestuur,
+        "welkom":            welkom,
+        "school":            school,
+        "ladder_html":       ladder_html,
+        "contact_sections":  contact_sections,
     }
 
     html = _HTML_TEMPLATE.replace("__SCHEDULE_DATA__", json.dumps(data, ensure_ascii=False))
