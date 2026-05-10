@@ -1,2 +1,2 @@
-Pillow==9.5.0
+Pillow==11.2.1
 markdown==3.10.2
