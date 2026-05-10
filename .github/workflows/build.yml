@@ -5,6 +5,9 @@ on:
     paths:
       - 'input/**'
       - 'docs/images/sfeer/*.jpg'
+      - 'site_template.html'
+      - 'site_builder.py'
+      - 'tests/**'
 
 jobs:
   build:
@@ -19,8 +22,14 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install dependencies
-        run: pip install Pillow
+      - name: Install site dependencies
+        run: pip install -r requirements-site.txt
+
+      - name: Install dev dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Run tests
+        run: pytest -v
 
       - name: Build docs/index.html
         run: python build_site.py

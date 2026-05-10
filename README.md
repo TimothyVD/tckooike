@@ -44,6 +44,8 @@ tckooike/
 
 ## Editing website content
 
+> **Voor inhoudsbeheerders (niet-technisch):** zie [EDITING.md](EDITING.md) voor een stap-voor-stap handleiding in het Nederlands.
+
 All website content lives in `input/*.md`. Edit a file, push, and GitHub Actions rebuilds the site automatically within ~1 minute. No manual script run needed.
 
 ### Markdown syntax supported
@@ -114,8 +116,9 @@ The scheduler is run locally to compute a new match schedule. It outputs `input/
 ### Installation
 
 ```bash
-pip install -r requirements.txt
-pip install Pillow          # only needed for thumbnail generation in build_site.py
+pip install -r requirements.txt      # scheduler: ortools, pandas, openpyxl, reportlab
+pip install -r requirements-site.txt # site builder: Pillow, markdown
+pip install -r requirements-dev.txt  # tests: pytest
 ```
 
 ### Built-in demo
