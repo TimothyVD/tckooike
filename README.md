@@ -129,6 +129,19 @@ python competition_scheduler.py
 
 Runs a synthetic 2-poule demo, saves `input/schedule.json`, and writes a local `schedule_demo.html` preview.
 
+### Collecting team availabilities via Google Forms
+
+`create_form.gs` automates this. It creates a Google Form that asks team captains for their availability across all date/time slots, then exports the responses directly to the CSV format the scheduler expects.
+
+1. Go to [script.google.com](https://script.google.com) and create a new project.
+2. Paste the contents of `create_form.gs` into the editor.
+3. Edit the `CONFIG` block at the top: set `formTitle`, `poules`, and the date/time slots for each day.
+4. Run `createForm()` — a Google Form is created in your Drive. Share the published URL with all team captains.
+5. Once responses are collected, run `exportToCSV()`. Two files appear in your Drive root:
+   - `teams.csv` → use with `--teams`
+   - `team_availabilities.csv` → use with `--avail`
+6. Download both files and pass them to the scheduler (see below).
+
 ### From CSV files
 
 ```bash
@@ -142,7 +155,7 @@ python competition_scheduler.py \
 | Argument | Description |
 |---|---|
 | `--teams` | CSV with team names and poule assignments |
-| `--avail` | CSV with team availabilities (Google Forms export) |
+| `--avail` | CSV with team availabilities (Google Forms export via `create_form.gs`) |
 | `--slots` | CSV with terrain slot definitions |
 | `--output` | Output Excel file |
 | `--timelimit` | Solver time limit in seconds (default: 60) |
