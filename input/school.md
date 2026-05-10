@@ -19,11 +19,11 @@ TC Kooike organiseert, in samenwerking met tennisschool **WhackIt**, tennislesse
 
 | Groep | Formule | Prijs |
 |-------|---------|-------|
-| Blauw (4–5 jaar) | 1u/week · 8 lessen | €100 |
-| Rood (6–8 jaar) | 1u/week · 8 lessen | €100 |
-| Oranje (9–10 jaar) | 1u/week · 8 lessen | €100 |
-| Groen (11–12 jaar) | 1u/week · 8 lessen | €100 |
-| Geel – Tieners (13–18 j) | 1u/week · 8 lessen | €100 |
+| Blauw (4–5 jaar) | 1u/week · 8 lessen | €100 pp |
+| Rood (6–8 jaar) | 1u/week · 8 lessen | €100 pp |
+| Oranje (9–10 jaar) | 1u/week · 8 lessen | €100 pp |
+| Groen (11–12 jaar) | 1u/week · 8 lessen | €100 pp |
+| Geel – Tieners (13–18 j) | 1u/week · 8 lessen | €100 pp |
 | Privé (1 speler) | 1u/week · 8 lessen | €280 |
 | Privé (2 spelers) | 1u/week · 8 lessen | €140 pp |
 
