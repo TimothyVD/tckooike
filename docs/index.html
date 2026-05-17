@@ -771,7 +771,7 @@ function panelInterclub() {
   const filtered = (DATA.interclub_matches || []).map(m => {
     const dt = parseInterclubDate(m.datum);
     return { m, dt };
-  }).filter(x => x.dt && x.dt.getTime() >= now.getTime())
+  }).filter(x => x.dt && x.dt.getTime() + 8 * 60 * 60 * 1000 >= now.getTime())
     .sort((a, b) => a.dt.getTime() - b.dt.getTime());
 
   const capOptions = Array.from(new Set(
