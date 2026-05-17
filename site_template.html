@@ -450,6 +450,7 @@ function switchTab(id) {
     b.classList.toggle('active', b.dataset.tab === validId)
   );
   if (location.hash !== '#' + validId) history.replaceState(null, '', '#' + validId);
+  window.scrollTo(0, 0);
 }
 function buildAllPanels() {
   const root = document.getElementById('main-content');
