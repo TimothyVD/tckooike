@@ -12,6 +12,9 @@ Terreinreservaties via Tennis & Padel Vlaanderen
 [Schrijf je hier in!](https://www.tennisenpadelvlaanderen.be/tornooi-detail?tornooiId=140736)
 hide-after: 2026-06-12
 
+## 17 - 21 augustus 2026 | Tenniskamp 🎾
+[Schrijf je hier in!](https://www.tennisenpadelvlaanderen.be/nl/clubdashboard/doelgroep-details?clubId=2158&aanbodId=10693&doelgroepId=45436)
+
 ## 28 augustus 2026 | Nacht der Dubbels 🌙
 
 ## 5 – 20 september 2026 | Fairplay Tornooi
