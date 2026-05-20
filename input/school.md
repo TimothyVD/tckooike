@@ -19,8 +19,7 @@ TC Kooike organiseert, in samenwerking met tennisschool **WhackIt**, tennislesse
 
 Van 17 tot 21 augustus gaat ons jaarlijks tenniskamp weer door. Schrijf jullie snel in!
 
-[cta: ✏️ Inschrijven tenniskamp](https://www.tennisenpadelvlaanderen.be/nl/clubdashboard/doelgroep-details?clubId=2158&aanbodId=10693&doelgroepId=45436
-)
+[cta: ✏️ Inschrijven tenniskamp](https://www.tennisenpadelvlaanderen.be/nl/clubdashboard/doelgroep-details?clubId=2158&aanbodId=10693&doelgroepId=45436)
 
 ## 👧 Kids & Tieners
 
