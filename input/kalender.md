@@ -10,7 +10,7 @@ Terreinreservaties via Tennis & Padel Vlaanderen
 
 ## 12 – 21 juni 2026 | Bring a Smile – Tornooi
 
-## Zomer 2026 | Recreatieve dubbel competitie :beach_umbrella:
+## Zomer 2026 | Recreatieve dubbel competitie 🏖️
 [Schrijf je hier in!](https://forms.gle/qcH7FjiSAHiVDzwp9)
 hide-after: 2026-06-19
 
