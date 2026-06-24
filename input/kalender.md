@@ -12,7 +12,7 @@ Terreinreservaties via Tennis & Padel Vlaanderen
 
 ## Zomer 2026 | Recreatieve dubbel competitie 🏖️
 [Schrijf je hier in!](https://forms.gle/qcH7FjiSAHiVDzwp9)
-hide-after: 2026-06-19
+hide-after: 2026-06-27
 
 ## 17 - 21 augustus 2026 | Tenniskamp 🎾
 [Schrijf je hier in!](https://www.tennisenpadelvlaanderen.be/nl/clubdashboard/doelgroep-details?clubId=2158&aanbodId=10693&doelgroepId=45436)
