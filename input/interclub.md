@@ -92,5 +92,5 @@
 - 04/06/2026 15:00 | T.C. KOOIKE | Rommersheide
 - 11/06/2026 15:00 | T.C. KOOIKE | 7e Olympiade
 - 16/06/2026 15:00 | Ten Hoeve | T.C. KOOIKE
-- 25/06/2026 15:00 | T.C. KOOIKE | Peerdsbos
+- 20/07/2026 15:00 | T.C. KOOIKE | Peerdsbos
 - 16/07/2026 15:00 | T.C. KOOIKE | Borgerweert
