@@ -90,7 +90,7 @@
 - 15/05/2026 14:00 | Laagland | T.C. KOOIKE
 - 28/05/2026 15:00 | TC80 | T.C. KOOIKE
 - 04/06/2026 15:00 | T.C. KOOIKE | Rommersheide
-- 11/06/2026 15:00 | T.C. KOOIKE | 7e Olympiade
+- 10/08/2026 15:00 | T.C. KOOIKE | 7e Olympiade
 - 16/06/2026 15:00 | Ten Hoeve | T.C. KOOIKE
 - 20/07/2026 15:00 | T.C. KOOIKE | Peerdsbos
 - 16/07/2026 15:00 | T.C. KOOIKE | Borgerweert
