@@ -17,7 +17,6 @@
       --border: #DDD0CA; --text: #2C1810; --text-muted: #7D5A50;
       --win: #2E7D32; --win-bg: #E8F5E9;
       --loss: #C62828; --loss-bg: #FFEBEE;
-      --draw-color: #E65100; --draw-bg: #FFF3E0;
     }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); }
     a { color: var(--clay); text-decoration: none; }
@@ -74,6 +73,17 @@
     .main { max-width: 1100px; margin: 0 auto; padding: 24px 20px; }
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
+    /* ── Sub-tab nav (poules within Zomercompetitie) ── */
+    .subtab-nav { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+    .subtab-btn {
+      padding: 7px 16px; border: 1.5px solid var(--border); border-radius: 20px;
+      background: var(--card); cursor: pointer; font-size: .85rem; font-weight: 600;
+      color: var(--text-muted); transition: background .15s, color .15s, border-color .15s;
+    }
+    .subtab-btn:hover { color: var(--clay); border-color: var(--clay); }
+    .subtab-btn.active { background: var(--clay); color: #fff; border-color: var(--clay); }
+    .subtab-panel { display: none; }
+    .subtab-panel.active { display: block; }
     /* ── Card ── */
     .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 18px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.07); }
     .card-head {
@@ -97,6 +107,9 @@
     tbody tr:hover:not(.date-row) { background: #eeddd7; }
     td { padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
     .date-row td { background: #F2E0D9 !important; color: var(--clay-dark); font-weight: 700; padding: 5px 12px !important; font-size: .8rem; letter-spacing: .03em; }
+    /* Match schedule rows (Zomercompetitie): keep it simple, all white */
+    .match-table tbody tr:nth-child(even):not(.date-row) { background: #fff; }
+    .match-table tbody tr:hover:not(.date-row) { background: #faf7f6; }
     /* ── Score inputs ── */
     .score-wrap { display: flex; align-items: center; gap: 5px; }
     .score-in {
@@ -106,17 +119,30 @@
       background: #fff; transition: border-color .15s;
     }
     .score-in:focus { outline: none; border-color: var(--clay); box-shadow: 0 0 0 2px var(--clay-bg); }
+    .score-select {
+      width: 90px; height: 30px;
+      border: 1.5px solid var(--border); border-radius: 5px;
+      text-align: center; font-size: .95rem; font-weight: 600;
+      background: #fff; padding: 0 2px;
+    }
+    .no-spin::-webkit-outer-spin-button, .no-spin::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .no-spin { -moz-appearance: textfield; }
     .score-sep { font-weight: 700; color: var(--text-muted); }
-    /* Win highlighting on table rows */
-    tr.winner-a .score-in[data-side="a"] { color: var(--win); border-color: var(--win); }
-    tr.winner-a .score-in[data-side="b"] { color: var(--text-muted); }
-    tr.winner-b .score-in[data-side="b"] { color: var(--win); border-color: var(--win); }
-    tr.winner-b .score-in[data-side="a"] { color: var(--text-muted); }
+    .result-readonly { font-weight: 600; }
+    /* Win highlighting — per-poule table: Team A is the 3rd column, Team B the 5th */
+    .match-table:not(.match-table-overview) tr.winner-a td:nth-child(3) { color: var(--win); font-weight: 700; }
+    .match-table:not(.match-table-overview) tr.winner-b td:nth-child(5) { color: var(--win); font-weight: 700; }
+    /* Combined overview table has an extra leading Poule column, shifting Team A/B by one */
+    .match-table-overview tr.winner-a td:nth-child(4) { color: var(--win); font-weight: 700; }
+    .match-table-overview tr.winner-b td:nth-child(6) { color: var(--win); font-weight: 700; }
+    /* ── Result submission modal ── */
+    .modal-overlay { display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,.5); align-items: center; justify-content: center; }
+    .modal-card { max-width: 420px; width: 92vw; margin: 0; }
+    .modal-close { background: none; border: none; color: #fff; font-size: 1.3rem; cursor: pointer; line-height: 1; }
     /* ── Badges ── */
     .badge { display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: .78rem; font-weight: 700; }
     .badge-w { background: var(--win-bg); color: var(--win); }
     .badge-l { background: var(--loss-bg); color: var(--loss); }
-    .badge-d { background: var(--draw-bg); color: var(--draw-color); }
     .badge-n { background: #f0f0f0; color: #bbb; font-weight: 400; }
     /* ── Standings ── */
     .s-wrap thead th { text-align: center; }
@@ -127,11 +153,6 @@
     .s-name { font-weight: 600; }
     .s-pts { font-weight: 700; color: var(--clay-dark); }
     .s-empty { color: var(--text-muted); font-style: italic; padding: 18px 0; text-align: center; }
-    /* ── Teams grid ── */
-    .teams-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
-    .team-card { border: 1px solid var(--border); border-radius: 8px; padding: 13px 15px; }
-    .tc-name { font-weight: 700; color: var(--clay-dark); margin-bottom: 6px; }
-    .tc-detail { font-size: .82rem; color: var(--text-muted); line-height: 1.8; }
     /* ── Info chips ── */
     .chips { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
     .chip { background: var(--clay-bg); border: 1px solid var(--clay-light); border-radius: 20px; padding: 4px 13px; font-size: .82rem; color: var(--clay-dark); font-weight: 500; }
@@ -224,6 +245,7 @@
   </style>
   <script data-goatcounter="https://tckooike.goatcounter.com/count"
           async src="//gc.zgo.at/count.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -242,14 +264,7 @@
     <a href="https://www.tennisenpadelvlaanderen.be/nl/clubdashboard/lid-worden?clubId=2158" target="_blank" class="btn btn-ghost" title="Lid worden bij TC Kooike">
       <span>🎾</span><span class="btn-label">Lid worden? Schrijf je hier in.</span>
     </a>
-    <button class="btn btn-ghost" id="btn-import-trigger" title="Import scores from JSON file" style="display:none">
-      <span>📥</span><span class="btn-label">Import</span>
-    </button>
-    <button class="btn btn-ghost" id="btn-export" title="Export scores to JSON file" style="display:none">
-      <span>📤</span><span class="btn-label">Export</span>
-    </button>
   </div>
-  <input type="file" id="file-import" accept=".json" style="display:none">
 </header>
 
 <nav class="tab-nav" id="tab-nav"></nav>
@@ -259,6 +274,12 @@
   <button id="lb-close" aria-label="Sluiten">&times;</button>
   <img id="lb-img" src="" alt="">
 </div>
+<div id="result-modal-overlay" class="modal-overlay" role="dialog" aria-modal="true">
+  <div class="modal-card card">
+    <div class="card-head">Resultaat doorgeven<button id="result-modal-close" class="modal-close" aria-label="Sluiten">&times;</button></div>
+    <div class="card-body" id="result-modal-body"></div>
+  </div>
+</div>
 
 <script>
 /* ═══════════════════════════════════════════════════════
@@ -266,11 +287,23 @@
    ═══════════════════════════════════════════════════════ */
 const DATA = __SCHEDULE_DATA__;
 
-const STORAGE_KEY = ('cs_scores__' + DATA.club_name + '__' + DATA.season)
-  .replace(/[^\w]/g, '_');
+/* ═══════════════════════════════════════════════════════
+   Supabase — official, server-verified match results
+   ═══════════════════════════════════════════════════════ */
+const SUPABASE_URL = 'https://ujvazsgxcerliuigxirf.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_IiyyYGUDX0jpz6FLWevrpg_7tOuQYu2';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 /* ── State ── */
-let scores = {};   // { matchId: { a: number|null, b: number|null } }
+let RESULTS = {};   // { matchId: { winner_side, set1_w, set1_l, set2_w, set2_l, set3_w, set3_l, submitted_by_team } }
+
+async function fetchResults() {
+  const { data, error } = await sb.from('results').select('*');
+  if (error) { console.error(error); return; }
+  RESULTS = {};
+  for (const r of data) RESULTS[r.match_id] = r;
+}
+function getResult(id) { return RESULTS[id] || null; }
 
 /* ═══════════════════════════════════════════════════════
    Toast
@@ -285,74 +318,28 @@ function toastMsg(msg, dur = 2500) {
 }
 
 /* ═══════════════════════════════════════════════════════
-   Persistence — localStorage + optional scores.json fetch
+   Score helpers — best of 2 winning sets; 1-1 decided by a
+   match-tiebreak (to 10, win by >=2) instead of a 3rd set.
+   Set scores are entered via a dropdown of valid combinations and the
+   tiebreak winner is auto-derived from the loser's points, so both are
+   correct by construction client-side; supabase/schema.sql's
+   _valid_set/_valid_tiebreak independently re-verify server-side.
    ═══════════════════════════════════════════════════════ */
-function loadLocal() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) scores = JSON.parse(raw);
-  } catch (_) {}
-}
-function saveLocal() {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(scores)); } catch (_) {}
-}
-async function fetchServerScores() {
-  /* If scores.json is committed next to this HTML in GitHub Pages,
-     it is loaded as the baseline; local edits always take precedence. */
-  try {
-    const r = await fetch('./scores.json', { cache: 'no-cache' });
-    if (!r.ok) return;
-    const srv = await r.json();
-    if (srv && typeof srv === 'object') {
-      scores = Object.assign({}, srv, scores);  // local wins on conflict
-      saveLocal();
-    }
-  } catch (_) {}   /* file absent → silent */
-}
-
-/* ═══════════════════════════════════════════════════════
-   Export / Import
-   ═══════════════════════════════════════════════════════ */
-function exportScores() {
-  const blob = new Blob([JSON.stringify(scores, null, 2)], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'scores.json';
-  a.click();
-  URL.revokeObjectURL(a.href);
-  toastMsg('Exported scores.json — commit it to GitHub Pages to share results!');
-}
-function importScores(file) {
-  const reader = new FileReader();
-  reader.onload = e => {
-    try {
-      const data = JSON.parse(e.target.result);
-      Object.assign(scores, data);
-      saveLocal();
-      refreshAll();
-      toastMsg('Imported scores for ' + Object.keys(data).length + ' matches');
-    } catch (_) {
-      toastMsg('Could not parse file — expected a scores.json');
-    }
-  };
-  reader.readAsText(file);
-}
-
-/* ═══════════════════════════════════════════════════════
-   Score helpers
-   ═══════════════════════════════════════════════════════ */
-function getScore(id) { return scores[id] || { a: null, b: null }; }
-function setScore(id, side, raw) {
-  if (!scores[id]) scores[id] = { a: null, b: null };
-  scores[id][side] = (raw === '' || raw == null) ? null : Number(raw);
-  saveLocal();
+function matchSetsWon(id) {
+  // Reads the official, server-verified result (sets stored in team_a/team_b
+  // order) — not the winner-perspective entry form used by the submit modal.
+  const r = getResult(id);
+  if (!r) return { a: 0, b: 0 };
+  let a = 0, b = 0;
+  for (const [w, l] of [[r.set1_w, r.set1_l], [r.set2_w, r.set2_l], [r.set3_w, r.set3_l]]) {
+    if (w == null || l == null) continue;
+    if (w > l) a++; else if (l > w) b++;
+  }
+  return { a, b };
 }
 function resultForA(id) {
-  const s = getScore(id);
-  if (s.a === null || s.b === null) return null;
-  if (s.a > s.b) return 'w';
-  if (s.a < s.b) return 'l';
-  return 'd';
+  const r = getResult(id);
+  return r ? (r.winner_side === 'a' ? 'w' : 'l') : null;
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -362,28 +349,26 @@ function computeStandings(poule) {
   const ms = DATA.matches.filter(m => m.poule === poule);
   const st = {};
   for (const t of (DATA.teams_by_poule[poule] || [])) {
-    st[t.name] = { p: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 };
+    st[t.name] = { p: 0, w: 0, l: 0, setsFor: 0, setsAgainst: 0, pts: 0 };
   }
   for (const m of ms) {
-    const s = getScore(m.id);
-    if (s.a === null || s.b === null) continue;
-    if (!st[m.team_a]) st[m.team_a] = { p:0, w:0, d:0, l:0, gf:0, ga:0, pts:0 };
-    if (!st[m.team_b]) st[m.team_b] = { p:0, w:0, d:0, l:0, gf:0, ga:0, pts:0 };
+    const res = resultForA(m.id);
+    if (res === null) continue;
+    const { a: setsA, b: setsB } = matchSetsWon(m.id);
+    if (!st[m.team_a]) st[m.team_a] = { p:0, w:0, l:0, setsFor:0, setsAgainst:0, pts:0 };
+    if (!st[m.team_b]) st[m.team_b] = { p:0, w:0, l:0, setsFor:0, setsAgainst:0, pts:0 };
     st[m.team_a].p++; st[m.team_b].p++;
-    st[m.team_a].gf += s.a; st[m.team_a].ga += s.b;
-    st[m.team_b].gf += s.b; st[m.team_b].ga += s.a;
-    if (s.a > s.b) {
+    st[m.team_a].setsFor += setsA; st[m.team_a].setsAgainst += setsB;
+    st[m.team_b].setsFor += setsB; st[m.team_b].setsAgainst += setsA;
+    if (res === 'w') {
       st[m.team_a].w++; st[m.team_a].pts += 2; st[m.team_b].l++;
-    } else if (s.b > s.a) {
-      st[m.team_b].w++; st[m.team_b].pts += 2; st[m.team_a].l++;
     } else {
-      st[m.team_a].d++; st[m.team_a].pts++;
-      st[m.team_b].d++; st[m.team_b].pts++;
+      st[m.team_b].w++; st[m.team_b].pts += 2; st[m.team_a].l++;
     }
   }
   return Object.entries(st)
     .map(([name, s]) => ({ name, ...s }))
-    .sort((a, b) => b.pts - a.pts || b.w - a.w || (b.gf - b.ga) - (a.gf - a.ga));
+    .sort((a, b) => b.pts - a.pts || b.w - a.w || (b.setsFor - b.setsAgainst) - (a.setsFor - a.setsAgainst));
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -396,15 +381,14 @@ function esc(s) {
 }
 function fmtDate(ds) {
   try {
-    return new Date(ds + 'T00:00:00').toLocaleDateString(undefined,
+    return new Date(ds + 'T00:00:00').toLocaleDateString('nl-BE',
       { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
   } catch (_) { return ds; }
 }
 function badgeHtml(res) {
   if (!res) return '<span class="badge badge-n">–</span>';
   if (res === 'w') return '<span class="badge badge-w">W</span>';
-  if (res === 'l') return '<span class="badge badge-l">L</span>';
-  return '<span class="badge badge-d">D</span>';
+  return '<span class="badge badge-l">L</span>';
 }
 function rankSymbol(i) { return ['🥇','🥈','🥉'][i] || String(i + 1); }
 
@@ -416,6 +400,7 @@ const STATIC_TABS = [
   { id: 'welkom',   label: '🏠 Welkom' },
   { id: 'kalender', label: '📅 Kalender' },
   { id: 'interclub',label: '🎾 Interclub' },
+  { id: 'zomercompetitie', label: '🏆 Zomercompetitie' },
   { id: 'bestuur',  label: '👥 Bestuur' },
   { id: 'sfeer',    label: '📸 Sfeerbeelden' },
   { id: 'school',   label: '🎾 Tennisschool' },
@@ -454,69 +439,25 @@ function switchTab(id) {
 }
 function buildAllPanels() {
   const root = document.getElementById('main-content');
-  let html = '<div class="tab-panel" id="tp-overview">' + buildOverview() + '</div>';
-  for (const p of DATA.poules) {
-    html += '<div class="tab-panel" id="tp-p-' + esc(p) + '">' + buildPoule(p) + '</div>';
-  }
+  let html = '';
   for (const t of STATIC_TABS) {
     html += '<div class="tab-panel" id="tp-' + esc(t.id) + '">' + buildStaticPanel(t.id) + '</div>';
   }
   root.innerHTML = html;
+  root.querySelectorAll('.subtab-nav').forEach(navEl => {
+    navEl.addEventListener('click', e => {
+      const btn = e.target.closest('.subtab-btn');
+      if (!btn) return;
+      navEl.querySelectorAll('.subtab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      navEl.parentElement.querySelectorAll('.subtab-panel').forEach(p =>
+        p.classList.toggle('active', p.dataset.subtabPanel === btn.dataset.subtab)
+      );
+    });
+  });
   const hashTab = location.hash.slice(1);
   switchTab(hashTab || STATIC_TABS[0].id);
   window.addEventListener('hashchange', () => switchTab(location.hash.slice(1)));
-  root.querySelectorAll('.score-in').forEach(inp => inp.addEventListener('change', onScoreChange));
-}
-
-/* ── Overview panel ── */
-function buildOverview() {
-  const multi = DATA.poules.length > 1;
-  const sorted = [...DATA.matches].sort((a, b) =>
-    a.date !== b.date ? a.date.localeCompare(b.date) :
-    a.time !== b.time ? a.time.localeCompare(b.time) :
-    String(a.terrain).localeCompare(String(b.terrain))
-  );
-  let rows = '', last = null;
-  for (const m of sorted) {
-    if (m.date !== last) {
-      last = m.date;
-      rows += '<tr class="date-row"><td colspan="' + (multi ? 7 : 6) + '">' + esc(fmtDate(m.date)) + '</td></tr>';
-    }
-    const s = getScore(m.id);
-    const va = s.a !== null ? s.a : '', vb = s.b !== null ? s.b : '';
-    const res = resultForA(m.id);
-    const tr = res === 'w' ? 'winner-a' : res === 'l' ? 'winner-b' : '';
-    const pCell = multi ? '<td>' + esc(m.poule) + '</td>' : '';
-    rows += '<tr class="' + tr + '" data-match-row="' + esc(m.id) + '">' +
-      pCell +
-      '<td>' + esc(m.time) + '</td>' +
-      '<td>' + esc(m.terrain) + '</td>' +
-      '<td><strong>' + esc(m.team_a) + '</strong></td>' +
-      '<td><div class="score-wrap">' +
-        '<input class="score-in" type="number" min="0" max="99" data-match="' + esc(m.id) + '" data-side="a" value="' + va + '" placeholder="—">' +
-        '<span class="score-sep">–</span>' +
-        '<input class="score-in" type="number" min="0" max="99" data-match="' + esc(m.id) + '" data-side="b" value="' + vb + '" placeholder="—">' +
-      '</div></td>' +
-      '<td><strong>' + esc(m.team_b) + '</strong></td>' +
-    '</tr>';
-  }
-  const pHead = multi ? '<th>Poule</th>' : '';
-  const nDone = DATA.matches.filter(m => { const s = getScore(m.id); return s.a !== null && s.b !== null; }).length;
-  return '<div class="chips">' +
-    '<span class="chip">🎾 ' + DATA.matches.length + ' matches total</span>' +
-    '<span class="chip" id="chip-done">✅ ' + nDone + ' results entered</span>' +
-    '<span class="chip">📅 Generated: ' + esc(DATA.generated) + '</span>' +
-    '</div>' +
-    '<div class="card">' +
-      '<div class="card-head">📋 All Matches — ' + esc(DATA.season) + '</div>' +
-      '<div class="tbl-wrap"><table>' +
-        '<thead><tr>' + pHead + '<th>Time</th><th>Terrain</th><th>Team A</th><th>Score</th><th>Team B</th></tr></thead>' +
-        '<tbody>' + rows + '</tbody>' +
-      '</table></div>' +
-    '</div>' +
-    '<p class="help">Scores entered here are saved automatically in your browser. ' +
-    'Use <strong>Export</strong> to download <code>scores.json</code> and commit it ' +
-    'to your GitHub Pages repository so that everyone sees the latest results.</p>';
 }
 
 /* ── Poule panel ── */
@@ -524,103 +465,154 @@ function buildPoule(poule) {
   const teams = DATA.teams_by_poule[poule] || [];
   const ms = DATA.matches.filter(m => m.poule === poule);
   const total = teams.length * (teams.length - 1) / 2;
+  const nScheduled = ms.filter(m => m.date).length;
   return '<div class="chips">' +
     '<span class="chip">👥 ' + teams.length + ' teams</span>' +
-    '<span class="chip">🎾 ' + ms.length + ' / ' + total + ' matches scheduled</span>' +
+    '<span class="chip">🎾 ' + nScheduled + ' / ' + total + ' wedstrijden gepland</span>' +
     '</div>' +
     buildStandingsCard(poule) +
-    buildTeamsCard(poule, teams) +
     buildMatchCard(poule, ms);
 }
 
 /* ── Standings card ── */
 function buildStandingsCard(poule) {
   return '<div class="card">' +
-    '<div class="card-head">🏆 Standings — Poule ' + esc(poule) + '</div>' +
+    '<div class="card-head">🏆 Stand — Poule ' + esc(poule) + '</div>' +
     '<div class="card-body" id="standings-' + esc(poule) + '">' + renderStandings(poule) + '</div>' +
     '</div>';
 }
 function renderStandings(poule) {
   const rows = computeStandings(poule);
   if (rows.every(r => r.p === 0)) {
-    return '<p class="s-empty">No results entered yet — add scores in the match schedule below.</p>';
+    return '<p class="s-empty">Nog geen resultaten ingevoerd — voer scores in via het wedstrijdschema hieronder.</p>';
   }
   const trs = rows.map((r, i) =>
     '<tr>' +
       '<td class="s-rank">' + rankSymbol(i) + '</td>' +
       '<td class="s-name">' + esc(r.name) + '</td>' +
-      '<td>' + r.p + '</td><td>' + r.w + '</td><td>' + r.d + '</td><td>' + r.l + '</td>' +
+      '<td>' + r.p + '</td><td>' + r.w + '</td><td>' + r.l + '</td>' +
       '<td class="s-pts">' + r.pts + '</td>' +
     '</tr>'
   ).join('');
   return '<div class="s-wrap tbl-wrap"><table>' +
-    '<thead><tr><th>#</th><th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>Pts</th></tr></thead>' +
+    '<thead><tr><th>#</th><th>Team</th><th>P</th><th>W</th><th>V</th><th>Pt</th></tr></thead>' +
     '<tbody>' + trs + '</tbody>' +
     '</table></div>' +
-    '<p class="help" style="padding-top:8px">Points: W = 2 &nbsp;·&nbsp; D = 1 &nbsp;·&nbsp; L = 0</p>';
-}
-
-/* ── Teams card ── */
-function buildTeamsCard(poule, teams) {
-  const withDetails = teams.some(t => t.player_1 || t.player_2);
-  if (!withDetails) return '';
-  const cards = teams.map(t =>
-    '<div class="team-card">' +
-      '<div class="tc-name">' + esc(t.name) + '</div>' +
-      '<div class="tc-detail">' +
-        (t.player_1 ? '👤 ' + esc(t.player_1) + (t.tel_1 ? ' · <a href="tel:' + esc(t.tel_1) + '">' + esc(t.tel_1) + '</a>' : '') + '<br>' : '') +
-        (t.player_2 ? '👤 ' + esc(t.player_2) + (t.tel_2 ? ' · <a href="tel:' + esc(t.tel_2) + '">' + esc(t.tel_2) + '</a>' : '') : '') +
-      '</div>' +
-    '</div>'
-  ).join('');
-  const cbId = 'cb-' + poule;
-  const chId = 'ch-' + poule;
-  return '<div class="card">' +
-    '<div class="card-head collapsible" id="' + chId + '" onclick="toggleCard(\'' + cbId + '\', this)">' +
-      '👥 Players — Poule ' + esc(poule) + ' <span class="toggle-icon">▾</span>' +
-    '</div>' +
-    '<div class="card-body" id="' + cbId + '">' +
-      '<div class="teams-grid">' + cards + '</div>' +
-    '</div>' +
-  '</div>';
+    '<p class="help" style="padding-top:8px">Punten: W = 2 &nbsp;·&nbsp; V = 0</p>';
 }
 
 /* ── Match schedule card ── */
+function matchResultCell(m) {
+  if (!m.date) {
+    return '<span style="color:var(--text-muted);font-style:italic">Nog in te plannen</span>';
+  }
+  const r = getResult(m.id);
+  if (!r) {
+    return '<button class="btn btn-submit-result" data-match="' + esc(m.id) + '" style="background:var(--clay);color:#fff">Resultaat doorgeven</button>';
+  }
+  const fmtSet = (w, l) => (w == null || l == null) ? '' : (w + '–' + l);
+  const sets = [fmtSet(r.set1_w, r.set1_l), fmtSet(r.set2_w, r.set2_l), fmtSet(r.set3_w, r.set3_l)]
+    .filter(Boolean).join('  ');
+  return '<span class="result-readonly">' + esc(sets) + '</span>';
+}
+
 function buildMatchCard(poule, ms) {
-  if (!ms.length) return '<p style="color:var(--text-muted);font-style:italic;padding:12px 0">No matches scheduled.</p>';
-  const sorted = [...ms].sort((a, b) =>
-    a.date !== b.date ? a.date.localeCompare(b.date) : a.time.localeCompare(b.time)
-  );
+  if (!ms.length) return '<p style="color:var(--text-muted);font-style:italic;padding:12px 0">Nog geen wedstrijden gepland.</p>';
+  const sorted = [...ms].sort((a, b) => {
+    const ea = !a.date, eb = !b.date;
+    if (ea !== eb) return ea ? 1 : -1;   // matches with no date yet always sort last
+    return a.date !== b.date ? a.date.localeCompare(b.date) : a.time.localeCompare(b.time);
+  });
   let rows = '', last = null;
   for (const m of sorted) {
     if (m.date !== last) {
       last = m.date;
-      rows += '<tr class="date-row"><td colspan="6">' + esc(fmtDate(m.date)) + '</td></tr>';
+      const label = m.date ? esc(fmtDate(m.date)) : '📋 Nog in te plannen';
+      rows += '<tr class="date-row"><td colspan="6">' + label + '</td></tr>';
     }
-    const s = getScore(m.id);
-    const va = s.a !== null ? s.a : '', vb = s.b !== null ? s.b : '';
     const res = resultForA(m.id);
     const tr = res === 'w' ? 'winner-a' : res === 'l' ? 'winner-b' : '';
     rows += '<tr class="' + tr + '" data-match-row="' + esc(m.id) + '">' +
       '<td>' + esc(m.time) + '</td>' +
       '<td>' + esc(m.terrain) + '</td>' +
       '<td>' + esc(m.team_a) + '</td>' +
-      '<td><div class="score-wrap">' +
-        '<input class="score-in" type="number" min="0" max="99" data-match="' + esc(m.id) + '" data-side="a" value="' + va + '" placeholder="—">' +
-        '<span class="score-sep">–</span>' +
-        '<input class="score-in" type="number" min="0" max="99" data-match="' + esc(m.id) + '" data-side="b" value="' + vb + '" placeholder="—">' +
-      '</div></td>' +
+      '<td data-cell="' + esc(m.id) + '">' + matchResultCell(m) + '</td>' +
       '<td>' + esc(m.team_b) + '</td>' +
-      '<td id="res-' + esc(m.id) + '">' + badgeHtml(res) + '</td>' +
+      '<td data-res="' + esc(m.id) + '">' + badgeHtml(res) + '</td>' +
     '</tr>';
   }
   return '<div class="card">' +
-    '<div class="card-head">📅 Match Schedule — Poule ' + esc(poule) + '</div>' +
-    '<div class="tbl-wrap"><table>' +
-      '<thead><tr><th>Time</th><th>Terrain</th><th>Team A</th><th>Score</th><th>Team B</th><th>Result</th></tr></thead>' +
+    '<div class="card-head">📅 Wedstrijdschema — Poule ' + esc(poule) + '</div>' +
+    '<div class="tbl-wrap"><table class="match-table">' +
+      '<thead><tr><th>Tijd</th><th>Terrein</th><th>Team A</th><th>Resultaat</th><th>Team B</th><th></th></tr></thead>' +
       '<tbody>' + rows + '</tbody>' +
     '</table></div>' +
   '</div>';
+}
+
+/* ── Combined overview: all poules' schedules in one table ── */
+function buildOverviewMatchCard(ms) {
+  if (!ms.length) return '<p style="color:var(--text-muted);font-style:italic;padding:12px 0">Nog geen wedstrijden gepland.</p>';
+  const sorted = [...ms].sort((a, b) => {
+    const ea = !a.date, eb = !b.date;
+    if (ea !== eb) return ea ? 1 : -1;
+    if (a.date !== b.date) return a.date.localeCompare(b.date);
+    if (a.time !== b.time) return a.time.localeCompare(b.time);
+    return a.poule.localeCompare(b.poule);
+  });
+  let rows = '', last = null;
+  for (const m of sorted) {
+    if (m.date !== last) {
+      last = m.date;
+      const label = m.date ? esc(fmtDate(m.date)) : '📋 Nog in te plannen';
+      rows += '<tr class="date-row"><td colspan="7">' + label + '</td></tr>';
+    }
+    const res = resultForA(m.id);
+    const tr = res === 'w' ? 'winner-a' : res === 'l' ? 'winner-b' : '';
+    rows += '<tr class="' + tr + '" data-match-row="' + esc(m.id) + '">' +
+      '<td>' + esc(m.poule) + '</td>' +
+      '<td>' + esc(m.time) + '</td>' +
+      '<td>' + esc(m.terrain) + '</td>' +
+      '<td>' + esc(m.team_a) + '</td>' +
+      '<td data-cell="' + esc(m.id) + '">' + matchResultCell(m) + '</td>' +
+      '<td>' + esc(m.team_b) + '</td>' +
+      '<td data-res="' + esc(m.id) + '">' + badgeHtml(res) + '</td>' +
+    '</tr>';
+  }
+  return '<div class="card">' +
+    '<div class="card-head">📅 Wedstrijdschema — Alle poules</div>' +
+    '<div class="tbl-wrap"><table class="match-table match-table-overview">' +
+      '<thead><tr><th>Poule</th><th>Tijd</th><th>Terrein</th><th>Team A</th><th>Resultaat</th><th>Team B</th><th></th></tr></thead>' +
+      '<tbody>' + rows + '</tbody>' +
+    '</table></div>' +
+  '</div>';
+}
+function buildOverview() {
+  const ms = DATA.matches;
+  const nScheduled = ms.filter(m => m.date).length;
+  return '<div class="chips">' +
+    '<span class="chip">🏆 ' + (DATA.poules || []).length + ' poules</span>' +
+    '<span class="chip">🎾 ' + nScheduled + ' / ' + ms.length + ' wedstrijden gepland</span>' +
+    '</div>' +
+    buildOverviewMatchCard(ms);
+}
+
+/* ── Zomercompetitie panel: one sub-tab per poule, each with standings + schedule ── */
+function panelZomercompetitie() {
+  const poules = DATA.poules || [];
+  if (!poules.length) {
+    return '<p style="color:var(--text-muted);font-style:italic">Nog geen poules beschikbaar.</p>';
+  }
+  const tabs = ['Overzicht', ...poules];
+  const nav = tabs.map((p, i) =>
+    '<button class="subtab-btn' + (i === 0 ? ' active' : '') + '" data-subtab="' + esc(p) + '">' + esc(p) + '</button>'
+  ).join('');
+  const panels = tabs.map((p, i) =>
+    '<div class="subtab-panel' + (i === 0 ? ' active' : '') + '" data-subtab-panel="' + esc(p) + '">' +
+      (p === 'Overzicht' ? buildOverview() : buildPoule(p)) +
+    '</div>'
+  ).join('');
+  return '<nav class="subtab-nav">' + nav + '</nav>' + panels;
 }
 
 /* ── Collapsible helper ── */
@@ -687,6 +679,7 @@ function buildStaticPanel(id) {
     case 'welkom':   return panelWelkom();
     case 'kalender': return panelKalender();
     case 'interclub': return panelInterclub();
+    case 'zomercompetitie': return panelZomercompetitie();
     case 'bestuur':  return panelBestuur();
     case 'sfeer':    return panelSfeer();
     case 'school':   return panelSchool();
@@ -969,39 +962,137 @@ function panelContact() {
 /* ═══════════════════════════════════════════════════════
    Event handling
    ═══════════════════════════════════════════════════════ */
-function onScoreChange(e) {
-  const inp = e.target;
-  setScore(inp.dataset.match, inp.dataset.side, inp.value);
-  refreshMatch(inp.dataset.match);
-}
 function refreshMatch(id) {
-  const s = getScore(id);
+  // A match can appear in more than one place (its poule tab AND the
+  // combined "Overzicht" tab), so every lookup here uses querySelectorAll
+  // rather than a unique id, scoped via CSS.escape on a data-* attribute.
   const res = resultForA(id);
   const trCls = res === 'w' ? 'winner-a' : res === 'l' ? 'winner-b' : '';
-  document.querySelectorAll('[data-match-row="' + CSS.escape(id) + '"]').forEach(tr => {
-    tr.className = trCls;
-    ['a', 'b'].forEach(side => {
-      tr.querySelectorAll('.score-in[data-side="' + side + '"]').forEach(inp => {
-        const cur = s[side] !== null ? String(s[side]) : '';
-        if (inp.value !== cur) inp.value = cur;
-      });
-    });
-  });
-  const badge = document.getElementById('res-' + CSS.escape(id));
-  if (badge) badge.innerHTML = badgeHtml(res);
+  document.querySelectorAll('[data-match-row="' + CSS.escape(id) + '"]').forEach(tr => tr.className = trCls);
   const match = DATA.matches.find(m => m.id === id);
   if (match) {
-    const el = document.getElementById('standings-' + CSS.escape(match.poule));
-    if (el) el.innerHTML = renderStandings(match.poule);
+    document.querySelectorAll('[data-cell="' + CSS.escape(id) + '"]').forEach(cell => cell.innerHTML = matchResultCell(match));
   }
-  const chip = document.getElementById('chip-done');
-  if (chip) {
-    const n = DATA.matches.filter(m => { const s = getScore(m.id); return s.a !== null && s.b !== null; }).length;
-    chip.textContent = '✅ ' + n + ' results entered';
+  document.querySelectorAll('[data-res="' + CSS.escape(id) + '"]').forEach(badge => badge.innerHTML = badgeHtml(res));
+  if (match) {
+    const el = document.getElementById('standings-' + match.poule);
+    if (el) el.innerHTML = renderStandings(match.poule);
   }
 }
 function refreshAll() {
   for (const m of DATA.matches) refreshMatch(m.id);
+}
+
+/* ═══════════════════════════════════════════════════════
+   Resultaat doorgeven — submission modal
+   ═══════════════════════════════════════════════════════ */
+function openResultModal(matchId) {
+  const m = DATA.matches.find(x => x.id === matchId);
+  if (!m) return;
+  document.getElementById('result-modal-body').innerHTML = renderResultForm(m);
+  document.getElementById('result-modal-overlay').style.display = 'flex';
+  wireResultForm(m);
+}
+function closeResultModal() {
+  document.getElementById('result-modal-overlay').style.display = 'none';
+}
+/* Every valid tennis set score, written as "<winner's games>-<loser's games>" —
+   the winner here means whoever is later declared the overall match winner,
+   so a set the winner lost (e.g. "4-6") is just as valid an option as one
+   they won. Mirrors _valid_set in supabase/schema.sql. */
+const SET_SCORE_OPTIONS = [
+  '6-0', '6-1', '6-2', '6-3', '6-4', '7-5', '7-6',
+  '0-6', '1-6', '2-6', '3-6', '4-6', '5-7', '6-7',
+];
+function tiebreakWinnerFor(loser) {
+  if (loser == null || !Number.isInteger(loser) || loser < 0) return null;
+  return Math.max(10, loser + 2);
+}
+function setSelectRow(label, id) {
+  const opts = SET_SCORE_OPTIONS.map(s => '<option value="' + s + '">' + s + '</option>').join('');
+  return '<div class="score-wrap" style="margin-bottom:8px">' +
+    '<span style="width:120px;font-size:.85rem;color:var(--text-muted)">' + esc(label) + '</span>' +
+    '<select id="' + id + '" class="score-select"><option value="">Kies…</option>' + opts + '</select>' +
+  '</div>';
+}
+function tiebreakRow() {
+  return '<div class="score-wrap" style="margin-bottom:8px">' +
+    '<span style="width:120px;font-size:.85rem;color:var(--text-muted)">3e set (MTB10)</span>' +
+    '<span style="font-size:.82rem;color:var(--text-muted);margin-right:4px">Punten verliezer:</span>' +
+    '<input id="rf-s3l" class="score-in no-spin" type="number" min="0" max="30" placeholder="—">' +
+    '<span id="rf-s3-preview" class="help" style="margin-left:8px"></span>' +
+  '</div>';
+}
+function renderResultForm(m) {
+  return '<label class="help">Toegangscode</label>' +
+    '<input id="rf-code" class="score-in" style="width:100%;margin-bottom:12px" type="text" maxlength="6" placeholder="bv. AB12CD">' +
+    '<label class="help">Wie heeft gewonnen?</label>' +
+    '<div style="margin:6px 0 12px">' +
+      '<label style="display:block"><input type="radio" name="rf-winner" value="a"> ' + esc(m.team_a) + '</label>' +
+      '<label style="display:block"><input type="radio" name="rf-winner" value="b"> ' + esc(m.team_b) + '</label>' +
+    '</div>' +
+    '<p class="help" style="margin-bottom:6px">Kies per set de stand vanuit het perspectief van de WINNAAR (winnaar eerst, ook in een set die de winnaar verloren heeft). Ging het naar een match-tiebreak? Typ enkel het puntenaantal van de verliezer — de winnaar staat altijd op 10 (of meer, bij gelijkopgaande stand).</p>' +
+    setSelectRow('Set 1', 'rf-s1') + setSelectRow('Set 2', 'rf-s2') + tiebreakRow() +
+    '<button id="rf-submit" class="btn" style="background:var(--clay);color:#fff;width:100%;margin-top:10px" disabled>Versturen</button>';
+}
+function wireResultForm(m) {
+  const parseSet = id => {
+    const v = document.getElementById(id).value;
+    if (!v) return null;
+    const [w, l] = v.split('-').map(Number);
+    return { w, l };
+  };
+  const validateLive = () => {
+    const s1 = parseSet('rf-s1');
+    const s2 = parseSet('rf-s2');
+    const lRaw = document.getElementById('rf-s3l').value;
+    const loser = lRaw === '' ? null : Number(lRaw);
+    const winner = tiebreakWinnerFor(loser);
+    document.getElementById('rf-s3-preview').textContent = (winner != null) ? ('→ ' + winner + '–' + loser) : '';
+
+    let wins = 0;
+    if (s1 && s1.w > s1.l) wins++;
+    if (s2 && s2.w > s2.l) wins++;
+    if (winner != null) wins++;   // the tiebreak winner is always the declared winner, by construction
+    const codeOk = document.getElementById('rf-code').value.trim().length > 0;
+    const winnerOk = !!document.querySelector('input[name="rf-winner"]:checked');
+    document.getElementById('rf-submit').disabled = !(codeOk && winnerOk && s1 && s2 && wins >= 2);
+  };
+  ['rf-s1', 'rf-s2'].forEach(id => document.getElementById(id).addEventListener('change', validateLive));
+  document.getElementById('rf-s3l').addEventListener('input', validateLive);
+  document.getElementById('rf-code').addEventListener('input', validateLive);
+  document.querySelectorAll('input[name="rf-winner"]').forEach(r => r.addEventListener('change', validateLive));
+  document.getElementById('rf-submit').addEventListener('click', () => submitResult(m));
+}
+async function submitResult(m) {
+  const parseSet = id => {
+    const [w, l] = document.getElementById(id).value.split('-').map(Number);
+    return { w, l };
+  };
+  const s1 = parseSet('rf-s1');
+  const s2 = parseSet('rf-s2');
+  const lRaw = document.getElementById('rf-s3l').value;
+  const loser = lRaw === '' ? null : Number(lRaw);
+  const winner = tiebreakWinnerFor(loser);
+  const payload = {
+    p_match_id: m.id,
+    p_access_code: document.getElementById('rf-code').value.trim(),
+    p_winner_side: document.querySelector('input[name="rf-winner"]:checked').value,
+    p_set1_w: s1.w, p_set1_l: s1.l,
+    p_set2_w: s2.w, p_set2_l: s2.l,
+    p_set3_w: winner, p_set3_l: loser,
+  };
+  document.getElementById('rf-submit').disabled = true;
+  const { data, error } = await sb.rpc('submit_result', payload);
+  if (error || !data || !data.success) {
+    toastMsg((data && data.error) || 'Er ging iets mis bij het doorgeven.');
+    document.getElementById('rf-submit').disabled = false;
+    return;
+  }
+  toastMsg('Resultaat doorgegeven!');
+  closeResultModal();
+  await fetchResults();
+  refreshMatch(m.id);
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -1010,16 +1101,16 @@ function refreshAll() {
 async function init() {
   document.getElementById('js-title').textContent = DATA.club_name;
   document.title = DATA.club_name;
-  loadLocal();
+  await fetchResults();
   buildNav();
   buildAllPanels();
-  document.getElementById('btn-export').addEventListener('click', exportScores);
-  document.getElementById('btn-import-trigger').addEventListener('click', () =>
-    document.getElementById('file-import').click()
-  );
-  document.getElementById('file-import').addEventListener('change', e => {
-    if (e.target.files[0]) importScores(e.target.files[0]);
-    e.target.value = '';
+  document.addEventListener('click', e => {
+    const btn = e.target.closest('.btn-submit-result');
+    if (btn) openResultModal(btn.dataset.match);
+  });
+  document.getElementById('result-modal-close').addEventListener('click', closeResultModal);
+  document.getElementById('result-modal-overlay').addEventListener('click', e => {
+    if (e.target.id === 'result-modal-overlay') closeResultModal();
   });
   // Lightbox
   const overlay = document.getElementById('lb-overlay');
@@ -1035,8 +1126,6 @@ async function init() {
     e.preventDefault();
     lbOpen(a.href, a.getAttribute('aria-label') || '');
   });
-  await fetchServerScores();
-  refreshAll();
 }
 document.addEventListener('DOMContentLoaded', init);
 </script>

@@ -3,3 +3,14 @@ __pycache__/
 *.pyo
 .env
 output/scores.json
+
+# Team registration data exported from Google Forms — contains names & phone numbers
+input/teams.csv
+input/team_availabilities.csv
+
+# Real-season export embeds player phone numbers (unlike the example/demo ones)
+output/schedule_2026.xlsx
+
+# Claude Code local settings — can accumulate secrets via shell history (e.g.
+# exported API keys), never meant to be shared/version-controlled
+.claude/

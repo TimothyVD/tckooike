@@ -201,6 +201,76 @@ def load_kalender_events(path: str = "input/kalender.md") -> list[dict]:
     return events
 
 
+def _make_match_id(date_str: str, time_str: str, ta: str, tb: str, poule: str = "") -> str:
+    """Must stay byte-identical to competition_scheduler.py's id formula —
+    re-parsing schedule.md has to reproduce the same ids every time so
+    already-submitted Supabase results never get silently orphaned."""
+    if date_str:
+        raw = f"{date_str}_{time_str}_{ta}_{tb}"
+    else:
+        raw = f"UNSCHEDULED_{poule}_{ta}_{tb}"
+    return raw.replace(" ", "_").replace(".", "_").replace("&", "and").replace("/", "-")
+
+
+def load_schedule_md(path: str = "input/schedule.md") -> dict:
+    """
+    Load the Zomercompetitie schedule from its hand-editable Markdown source.
+    Mirrors input/interclub.md's convention: grouped per poule, date inline
+    per match.
+
+    Format:
+      ## Poule
+      - DD/MM/YYYY HH:MM | Terrein | Team A | Team B
+      - nog te plannen | Team A | Team B
+
+    Returns {"poules": [...], "teams_by_poule": {...}, "matches": [...]} —
+    the same shape competition_scheduler.py's export_html() used to write
+    directly into schedule.json.
+    """
+    text = _strip_comments(Path(path).read_text(encoding="utf-8"))
+    matches: list[dict] = []
+    teams_by_poule: dict[str, set[str]] = {}
+
+    for block in re.split(r'\n(?=## )', text.strip()):
+        lines = [l for l in block.strip().splitlines() if l.strip()]
+        if not lines or not lines[0].startswith("## "):
+            continue
+        poule = lines[0][3:].strip()
+        body = [l.strip() for l in lines[1:] if l.strip().startswith("-")]
+
+        for line in body:
+            parts = [p.strip() for p in line[1:].split("|")]
+            if len(parts) == 3 and parts[0].lower() == "nog te plannen":
+                _when, ta, tb = parts
+                date_str, time_str, terrain = "", "", ""
+            elif len(parts) == 4:
+                when, terrain, ta, tb = parts
+                try:
+                    day_str, time_str = when.split(" ", 1)
+                    d, mo, y = day_str.split("/")
+                    date_str = f"{y}-{mo}-{d}"
+                    _date.fromisoformat(date_str)  # validates it's a real date
+                except ValueError:
+                    print(f"WARNING: schedule.md — skipping line with unrecognised date under '## {poule}': {line}")
+                    continue
+            else:
+                print(f"WARNING: schedule.md — skipping malformed line under '## {poule}': {line}")
+                continue
+            teams_by_poule.setdefault(poule, set()).update([ta, tb])
+            matches.append({
+                "id": _make_match_id(date_str, time_str, ta, tb, poule),
+                "poule": poule, "date": date_str, "time": time_str, "terrain": terrain,
+                "team_a": ta, "team_b": tb,
+            })
+
+    poules = sorted(teams_by_poule)
+    return {
+        "poules": poules,
+        "teams_by_poule": {p: [{"name": t} for t in sorted(teams_by_poule[p])] for p in poules},
+        "matches": matches,
+    }
+
+
 def load_sponsors(path: str = "input/sponsors.md") -> list[dict]:
     """Load sponsors from a Markdown file.
 

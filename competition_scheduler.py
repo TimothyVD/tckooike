@@ -42,6 +42,7 @@ import argparse
 import random
 import re
 import site_builder
+from datetime import date as _date_cls
 from itertools import combinations
 from pathlib import Path
 
@@ -182,27 +183,19 @@ def _make_team_name(player_1: str, player_2: str) -> str:
     """
     Build a display team name from two player name strings.
 
-    Format: "<FirstName> <LastInitial> & <FirstName> <LastInitial>"
-    Example: "Alice Dupont" + "Bob Martin"  →  "Alice D & Bob M"
+    Format: "<FullName1> & <FullName2>"
+    Example: "Kris Boden" + "Truyken Ossenblok" → "Kris Boden & Truyken Ossenblok"
 
-    Falls back gracefully when names have no surname or are blank.
+    Falls back gracefully when one side is blank.
     """
-    def _fmt(name: str) -> str:
-        parts = name.strip().split()
-        if not parts:
-            return ""
-        first = parts[0]
-        initial = parts[-1][0].upper() + "." if len(parts) > 1 else ""
-        return f"{first} {initial}".strip()
-
-    a = _fmt(player_1)
-    b = _fmt(player_2)
+    a = player_1.strip()
+    b = player_2.strip()
     if a and b:
         return f"{a} & {b}"
     return a or b
 
 
-def load_teams(csv_path: str) -> tuple[dict[str, list[str]], pd.DataFrame]:
+def load_teams(csv_path: str) -> tuple[dict[str, list[str]], pd.DataFrame, dict[str, str]]:
     """
     Load team names, poule assignments, and optional player metadata from a CSV.
     Column order is flexible — columns are matched by name (case-insensitive).
@@ -224,10 +217,14 @@ def load_teams(csv_path: str) -> tuple[dict[str, list[str]], pd.DataFrame]:
 
     Returns
     --------
-    (poules, team_info_df)
+    (poules, team_info_df, alias_map)
       poules        {poule_name: [team1, team2, …]}
       team_info_df  Full DataFrame with all columns, normalised column names,
                     sorted by Poule then Team — for writing to the Teams sheet.
+      alias_map     {raw "Team" column value: display team name} — needed to
+                    match this team against a Google Forms availability export,
+                    where the team-name column holds the raw value rather than
+                    the auto-generated "FirstName L & FirstName L" display name.
     """
     df = pd.read_csv(csv_path, dtype=str).fillna("")
 
@@ -255,6 +252,7 @@ def load_teams(csv_path: str) -> tuple[dict[str, list[str]], pd.DataFrame]:
 
     poules: dict[str, list[str]] = {}
     info_rows = []
+    alias_map: dict[str, str] = {}
 
     p1_col = _find("player_1")
     p2_col = _find("player_2")
@@ -262,15 +260,18 @@ def load_teams(csv_path: str) -> tuple[dict[str, list[str]], pd.DataFrame]:
     for _, row in df.iterrows():
         p1 = row[p1_col].strip() if p1_col else ""
         p2 = row[p2_col].strip() if p2_col else ""
+        raw_team = row[team_col].strip() if team_col else ""
 
         # Auto-generate team name from players when both are present;
         # fall back to the explicit Team column value otherwise.
         if p1 and p2:
             team = _make_team_name(p1, p2)
         else:
-            team = row[team_col].strip() if team_col else ""
+            team = raw_team
         if not team:
             continue
+        if raw_team:
+            alias_map[raw_team] = team
         poule = row[poule_col].strip() if poule_col else "A"
         if not poule:
             poule = "A"
@@ -289,9 +290,32 @@ def load_teams(csv_path: str) -> tuple[dict[str, list[str]], pd.DataFrame]:
     team_info_df = team_info_df.loc[:, (team_info_df != "").any(axis=0)]
     team_info_df = team_info_df.sort_values(["Poule", "Team"] if "Poule" in team_info_df.columns else ["Team"]).reset_index(drop=True)
 
-    return poules, team_info_df
+    return poules, team_info_df, alias_map
 
 
+def find_shared_player_groups(team_info_df: pd.DataFrame) -> list[set[str]]:
+    """
+    Detect teams that share a real player (e.g. someone competing in two
+    different poules/categories) from the "Player 1" / "Player 2" columns.
+
+    Returns a list of team-name sets — each set is a group of teams that
+    must never be scheduled in the same slot.
+    """
+    if not {"Player 1", "Player 2"}.issubset(team_info_df.columns):
+        return []
+
+    teams_by_player: dict[str, set[str]] = {}
+    for _, row in team_info_df.iterrows():
+        team = str(row["Team"]).strip()
+        for col in ("Player 1", "Player 2"):
+            player = str(row.get(col, "") or "").strip().lower()
+            if player:
+                teams_by_player.setdefault(player, set()).add(team)
+
+    groups = [teams for teams in teams_by_player.values() if len(teams) > 1]
+    # De-duplicate identical groups
+    unique_groups = {frozenset(g) for g in groups}
+    return [set(g) for g in unique_groups]
 
 
 # ── Core scheduler ─────────────────────────────────────────────────────────────
@@ -302,6 +326,7 @@ def schedule(
     terrain_slots: list[dict],
     time_limit_s: int = 60,
     verbose: bool = True,
+    shared_player_groups: list[set[str]] | None = None,
 ) -> tuple[list[dict], list[tuple[str, str, str]]]:
     """
     Assign all intra-poule round-robin matches to (slot, terrain) pairs using CP-SAT.
@@ -314,6 +339,13 @@ def schedule(
     terrain_slots   List of slot dicts from generate_terrain_slots / load_terrain_slots.
     time_limit_s    Maximum solver wall-clock time in seconds.
     verbose         Print a summary after solving.
+    shared_player_groups
+                    Optional list of team-name sets that share a real player
+                    (e.g. someone competing in two poules/categories). Those
+                    teams' matches are never placed in the same slot, and the
+                    solver is steered away from double-booking that player on
+                    the same day (or onto back-to-back slots if it can't avoid
+                    the same day).
 
     Returns
     --------
@@ -335,12 +367,25 @@ def schedule(
     # All actual (slot, terrain) pairs that the venue provides
     st_pairs: list[tuple[str, str]] = [(s["slot"], s["terrain"]) for s in terrain_slots]
 
+    # Order of slots within each date, used to detect back-to-back matches
+    slots_by_date: dict[str, list[str]] = {}
+    for slot in slot_labels:
+        slots_by_date.setdefault(date_of_slot[slot], []).append(slot)
+    slot_index_in_day: dict[str, int] = {
+        slot: idx
+        for day_slots in slots_by_date.values()
+        for idx, slot in enumerate(sorted(day_slots))
+    }
+
     model = cp_model.CpModel()
 
     # ── Decision variables ────────────────────────────────────────────────────
     # x[(match_idx, st_idx)] = 1  iff  match is played at that (slot, terrain)
     # Variables are only created when both teams are available — prunes the model.
     x: dict[tuple[int, int], cp_model.IntVar] = {}
+    team_matches: dict[str, list[int]] = {}
+    # match_slot_vars[m_idx][slot] = [st_idx, …] — feasible (slot,terrain) options
+    match_slot_vars: dict[int, dict[str, list[int]]] = {}
 
     for m_idx, (_, ta, tb) in enumerate(matches):
         avail_a = team_avail.get(ta, set())
@@ -348,6 +393,9 @@ def schedule(
         for st_idx, (slot, _terrain) in enumerate(st_pairs):
             if slot in avail_a and slot in avail_b:
                 x[(m_idx, st_idx)] = model.new_bool_var(f"x_m{m_idx}_st{st_idx}")
+                match_slot_vars.setdefault(m_idx, {}).setdefault(slot, []).append(st_idx)
+        team_matches.setdefault(ta, []).append(m_idx)
+        team_matches.setdefault(tb, []).append(m_idx)
 
     # ── Constraints ───────────────────────────────────────────────────────────
 
@@ -382,8 +430,153 @@ def schedule(
             if team_day_vars:
                 model.add(sum(team_day_vars) <= 1)
 
-    # ── Objective: schedule as many matches as possible ───────────────────────
-    model.maximize(sum(x.values()))
+    # 4. Shared players (same person on two different teams): never the same
+    #    slot; discourage the same day, and penalise back-to-back slots
+    #    extra hard when the same day can't be avoided.
+    W_SAMEDAY = 50
+    W_ADJACENT = 30
+    sameday_penalties: list[tuple[cp_model.IntVar, int]] = []
+    for group in (shared_player_groups or []):
+        teams_in_group = [t for t in group if t in team_matches]
+        for t1, t2 in combinations(teams_in_group, 2):
+            for m1 in team_matches[t1]:
+                for m2 in team_matches[t2]:
+                    slots1 = match_slot_vars.get(m1, {})
+                    slots2 = match_slot_vars.get(m2, {})
+                    for slot1, sts1 in slots1.items():
+                        for slot2, sts2 in slots2.items():
+                            same_slot = slot1 == slot2
+                            same_day = date_of_slot[slot1] == date_of_slot[slot2]
+                            if not same_slot and not same_day:
+                                continue
+                            adjacent = (
+                                same_day and not same_slot
+                                and abs(slot_index_in_day[slot1] - slot_index_in_day[slot2]) == 1
+                            )
+                            for st1 in sts1:
+                                for st2 in sts2:
+                                    if same_slot:
+                                        model.add(x[(m1, st1)] + x[(m2, st2)] <= 1)
+                                    else:
+                                        viol = model.new_bool_var(
+                                            f"clash_{m1}_{st1}_{m2}_{st2}"
+                                        )
+                                        model.add(viol >= x[(m1, st1)] + x[(m2, st2)] - 1)
+                                        weight = W_SAMEDAY + (W_ADJACENT if adjacent else 0)
+                                        sameday_penalties.append((viol, weight))
+
+    # 5. Day contiguity: a slot is "active" on a given day if any match is
+    #    played there (on either terrain). Minimising the number of
+    #    active/inactive transitions across a day's ordered slots rewards
+    #    bunching matches into one contiguous block (more matches "in a
+    #    row") instead of e.g. one match at 17:00 and another at 20:00 with
+    #    an empty 18:30 between them.
+    slot_active: dict[str, object] = {}
+    for slot in slot_labels:
+        slot_vars = [
+            x[(m, st)]
+            for st, (s, _t) in enumerate(st_pairs)
+            if s == slot
+            for m in range(len(matches))
+            if (m, st) in x
+        ]
+        if not slot_vars:
+            slot_active[slot] = 0
+            continue
+        active = model.new_bool_var(f"active_{slot}")
+        model.add(active <= sum(slot_vars))
+        for v in slot_vars:
+            model.add(active >= v)
+        slot_active[slot] = active
+
+    day_transitions: list[cp_model.IntVar] = []
+    for date, day_slots in slots_by_date.items():
+        ordered = sorted(day_slots)
+        for s1, s2 in zip(ordered, ordered[1:]):
+            a1, a2 = slot_active[s1], slot_active[s2]
+            if isinstance(a1, int) and isinstance(a2, int):
+                continue
+            change = model.new_bool_var(f"change_{s1}_{s2}")
+            model.add(change >= a1 - a2)
+            model.add(change >= a2 - a1)
+            day_transitions.append(change)
+
+    # 6. Preferred block-start time, by day of week. A "block" is the day's
+    #    run of contiguous active slots (constraint 5 already pushes
+    #    towards exactly one such run per day) — what matters here is just
+    #    *when that run starts*, not every slot within it: once a block has
+    #    started, filling it out later in the evening is fine (that's the
+    #    whole point of clustering), but starting later than necessary when
+    #    an earlier slot was available is what we want to discourage.
+    def _start_lateness(date_str: str, time_str: str) -> int:
+        weekday = _date_cls.fromisoformat(date_str).weekday()  # Mon=0 .. Sun=6
+        if weekday == 4:  # Friday — 17:00 best, 18:30 the standard ideal, 20:00 late
+            return {"17:00": 0, "18:30": 1}.get(time_str, 5)
+        if weekday in (5, 6):  # Saturday/Sunday — anything 10:00-14:30 is ideal
+            return {"10:00": 0, "11:30": 0, "13:00": 0, "14:30": 0, "16:00": 2}.get(time_str, 5)
+        return 0  # no stated preference for other weekdays
+
+    block_start_terms: list[cp_model.IntVar] = []
+    for date, day_slots in slots_by_date.items():
+        ordered = sorted(day_slots)
+        any_before = 0  # OR of slot_active for every slot earlier this day
+        for i, slot in enumerate(ordered):
+            active = slot_active[slot]
+            lateness = _start_lateness(date, slot.split(" ", 1)[1])
+            if isinstance(active, int) or lateness == 0:
+                # Can't be "the start" (never active) or free to be the
+                # start (no penalty either way) — no variable needed.
+                pass
+            elif isinstance(any_before, int) and any_before == 0:
+                # First slot of the day: it's "the start" iff active.
+                block_start_terms.append((active, lateness))
+            else:
+                is_start = model.new_bool_var(f"start_{slot}")
+                model.add(is_start <= active)
+                model.add(is_start <= 1 - any_before)
+                model.add(is_start >= active - any_before)
+                block_start_terms.append((is_start, lateness))
+            if i < len(ordered) - 1:
+                if isinstance(any_before, int) and any_before == 0:
+                    any_before = active
+                else:
+                    nxt = model.new_bool_var(f"anybefore_{slot}")
+                    model.add(nxt >= any_before)
+                    model.add(nxt >= active)
+                    model.add(nxt <= any_before + active)
+                    any_before = nxt
+
+    # ── Objective ──────────────────────────────────────────────────────────
+    # Maximise matches scheduled (dominant term), then reward clustering
+    # multiple matches into the same slot (parallel terrains busy at once —
+    # more "vibe" at the club), bunching a day's matches into one contiguous
+    # block (fewer gaps), and starting that block at a sensible time for the
+    # day of week, then penalise shared-player same-day clashes.
+    W_MATCH = 1000
+    W_CLUSTER = 5
+    W_GAP = 6
+    W_START = 4
+    cluster_bonuses: list[cp_model.IntVar] = []
+    for slot in slot_labels:
+        slot_vars = [
+            x[(m, st)]
+            for st, (s, _t) in enumerate(st_pairs)
+            if s == slot
+            for m in range(len(matches))
+            if (m, st) in x
+        ]
+        n_terrains_at_slot = sum(1 for s, _t in st_pairs if s == slot)
+        if n_terrains_at_slot > 1 and slot_vars:
+            both = model.new_bool_var(f"cluster_{slot}")
+            model.add(2 * both <= sum(slot_vars))
+            cluster_bonuses.append(both)
+
+    objective_terms = [W_MATCH * v for v in x.values()]
+    objective_terms += [W_CLUSTER * b for b in cluster_bonuses]
+    objective_terms += [-W_GAP * c for c in day_transitions]
+    objective_terms += [-(W_START * lateness) * var for var, lateness in block_start_terms]
+    objective_terms += [-weight * viol for viol, weight in sameday_penalties]
+    model.maximize(sum(objective_terms))
 
     # ── Solve ─────────────────────────────────────────────────────────────────
     solver = cp_model.CpSolver()
@@ -1007,6 +1200,55 @@ def export_excel(
     print(f"Saved schedule to: {path}")
 
 
+# ── Markdown schedule export (hand-editable source of truth) ─────────────────
+# Mirrors input/interclub.md's convention: "## <category>" header, then
+# "- DD/MM/YYYY HH:MM | <opponent/venue> | <opponent/venue>" lines.
+
+
+def export_schedule_md(matches: list[dict], path: str = "input/schedule.md") -> None:
+    """
+    Write the schedule as a hand-editable Markdown file — the canonical,
+    human-owned source for the schedule from here on. input/schedule.json is
+    a *generated* file (regenerated from this Markdown by build_site.py),
+    the same way docs/index.html is generated from the other input/*.md
+    files — don't hand-edit schedule.json, edit this instead.
+
+    To reschedule a match: change its date/time/terrain in place. To
+    unschedule one: replace "DD/MM/YYYY HH:MM | Terrein" with "nog te
+    plannen". Re-run `python build_site.py` (and `python sync_results_db.py`
+    if the match already has a row in Supabase) afterwards.
+    """
+    by_poule: dict[str, list[dict]] = {}
+    for m in matches:
+        by_poule.setdefault(m["poule"], []).append(m)
+
+    def _sort_key(m: dict):
+        return (0, m["date"], m["time"]) if m.get("date") else (1, "", "")
+
+    def _fmt_date(date_str: str) -> str:
+        d, mo, y = date_str.split("-")[::-1]
+        return f"{d}/{mo}/{y}"
+
+    lines = [
+        "# Zomercompetitie — wedstrijdschema",
+        "// Dit bestand is de bron voor het schema — bewerk dit, niet input/schedule.json.",
+        "// Wedstrijd verplaatsen: verander de datum/tijd/terrein van de regel in place.",
+        "// Niet ingepland: zet 'nog te plannen' in plaats van 'DD/MM/YYYY HH:MM | Terrein'.",
+        "// Voer daarna `python build_site.py` uit (en `python sync_results_db.py` als er",
+        "// al resultaten in Supabase kunnen staan).",
+        "",
+    ]
+    for poule in sorted(by_poule):
+        lines.append(f"## {poule}")
+        for m in sorted(by_poule[poule], key=_sort_key):
+            when = f"{_fmt_date(m['date'])} {m['time']} | {m['terrain']}" if m.get("date") else "nog te plannen"
+            lines.append(f"- {when} | {m['team_a']} | {m['team_b']}")
+        lines.append("")
+
+    Path(path).write_text("\n".join(lines), encoding="utf-8")
+    print(f"Saved schedule data to: {path}")
+
+
 # ── Static HTML export (GitHub Pages) ─────────────────────────────────────────
 
 
@@ -1017,9 +1259,9 @@ def export_html(
     path: str,
     club_name: str = "Tennis Club",
     season: str = "Season 2026",
+    df_unsched: "pd.DataFrame | None" = None,
 ) -> None:
-    """Build the static HTML site and save schedule data to input/schedule.json."""
-    import json
+    """Build a local HTML preview and save the schedule to input/schedule.md."""
     from datetime import date as _date
 
     poules = (
@@ -1033,12 +1275,14 @@ def export_html(
         for _, row in team_info_df.iterrows():
             name = str(row.get("Team", "") or "").strip()
             if name:
+                # Phone numbers are deliberately excluded — this data is
+                # published on the public website via input/schedule.json.
                 info_lkp[name] = {
                     "player_1": str(row.get("Player 1", "") or "").strip(),
                     "player_2": str(row.get("Player 2", "") or "").strip(),
-                    "tel_1":    str(row.get("Tel P1",   "") or "").strip(),
-                    "tel_2":    str(row.get("Tel P2",   "") or "").strip(),
                 }
+
+    has_unsched = df_unsched is not None and not df_unsched.empty
 
     teams_by_poule: dict[str, list[dict]] = {}
     for poule in poules:
@@ -1047,9 +1291,12 @@ def export_html(
             if "Poule" in df_sched.columns and poule
             else df_sched
         )
-        team_names = sorted(set(df_p["Team A"].tolist() + df_p["Team B"].tolist()))
+        team_names = set(df_p["Team A"].tolist() + df_p["Team B"].tolist())
+        if has_unsched:
+            df_up = df_unsched[df_unsched["Poule"] == poule]
+            team_names |= set(df_up["Team A"].tolist() + df_up["Team B"].tolist())
         teams_by_poule[poule] = [
-            {"name": t, **info_lkp.get(t, {})} for t in team_names
+            {"name": t, **info_lkp.get(t, {})} for t in sorted(team_names)
         ]
 
     matches = []
@@ -1075,6 +1322,30 @@ def export_html(
             "team_b":  tb,
         })
 
+    # Matches with no common availability slot — shown at the bottom of the
+    # schedule (no date/time/terrain) so it's visible they still need to be
+    # arranged. Not pushed to Supabase: they have no real slot to verify a
+    # result against.
+    if has_unsched:
+        for _, row in df_unsched.iterrows():
+            ta        = str(row["Team A"])
+            tb        = str(row["Team B"])
+            poule_str = str(row.get("Poule", "")) if "Poule" in row.index else ""
+            mid = (
+                f"UNSCHEDULED_{poule_str}_{ta}_{tb}"
+                .replace(" ", "_").replace(".", "_")
+                .replace("&", "and").replace("/", "-")
+            )
+            matches.append({
+                "id":      mid,
+                "poule":   poule_str,
+                "date":    "",
+                "time":    "",
+                "terrain": "",
+                "team_a":  ta,
+                "team_b":  tb,
+            })
+
     schedule_data = {
         "club_name":      club_name,
         "season":         season,
@@ -1084,10 +1355,7 @@ def export_html(
         "matches":        matches,
     }
 
-    Path("input/schedule.json").write_text(
-        json.dumps(schedule_data, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
-    print("Saved schedule data to: input/schedule.json")
+    export_schedule_md(matches)
 
     site_builder.build(schedule_data, path)
 
@@ -1179,16 +1447,21 @@ def main():
         print("Run without arguments for a built-in demo.")
         return
 
-    teams_by_poule, team_info_df = load_teams(args.teams)
+    teams_by_poule, team_info_df, alias_map = load_teams(args.teams)
     all_teams      = [t for ts in teams_by_poule.values() for t in ts]
-    team_avail     = load_team_availabilities(args.avail)
+    team_avail_raw = load_team_availabilities(args.avail)
+    team_avail     = {alias_map.get(k, k): v for k, v in team_avail_raw.items()}
     terrain_sl     = load_terrain_slots(args.slots)
+    shared_groups  = find_shared_player_groups(team_info_df)
 
     n_poules = len(teams_by_poule)
     print(f"Loaded {n_poules} poule(s), {len(all_teams)} teams total, {len(terrain_sl)} terrain slots.")
+    if shared_groups:
+        print(f"Shared-player groups detected: {shared_groups}")
 
     scheduled, unscheduled = schedule(
-        teams_by_poule, team_avail, terrain_sl, time_limit_s=args.timelimit
+        teams_by_poule, team_avail, terrain_sl, time_limit_s=args.timelimit,
+        shared_player_groups=shared_groups,
     )
 
     df_sched, df_unsched = to_dataframes(scheduled, unscheduled)
@@ -1202,7 +1475,7 @@ def main():
     export_pdf(df_sched, team_info_df, pdf_path,
                club_name="TC Kooike", season="Seizoen 2026")
     export_html(df_sched, team_info_df, html_path,
-                club_name="TC Kooike", season="Seizoen 2026")
+                club_name="TC Kooike", season="Seizoen 2026", df_unsched=df_unsched)
 
 
 if __name__ == "__main__":

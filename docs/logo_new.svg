@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 110">
+  <!-- TC K -->
+  <text x="53" y="60"
+        font-family="'Arial Black', 'Arial Bold', Impact, sans-serif"
+        font-size="52" font-weight="900"
+        fill="#C1440E" letter-spacing="2">TC K</text>
+
+  <!-- Racket 1 (tilted left) -->
+  <g transform="translate(220, 42) rotate(-40)">
+    <!-- Head -->
+    <ellipse cx="0" cy="-14" rx="9" ry="12"
+             fill="none" stroke="#C1440E" stroke-width="3"/>
+    <!-- Handle -->
+    <line x1="0" y1="-2" x2="0" y2="16"
+          stroke="#C1440E" stroke-width="4" stroke-linecap="round"/>
+  </g>
+
+  <!-- Racket 2 (tilted right) -->
+  <g transform="translate(220, 42) rotate(40)">
+    <!-- Head -->
+    <ellipse cx="0" cy="-14" rx="9" ry="12"
+             fill="none" stroke="#C1440E" stroke-width="3"/>
+    <!-- Handle -->
+    <line x1="0" y1="-2" x2="0" y2="16"
+          stroke="#C1440E" stroke-width="4" stroke-linecap="round"/>
+  </g>
+
+  <!-- IKE -->
+  <text x="259" y="60"
+        font-family="'Arial Black', 'Arial Bold', Impact, sans-serif"
+        font-size="52" font-weight="900"
+        fill="#C1440E" letter-spacing="2">IKE</text>
+
+  <!-- Subtitle -->
+  <text x="200" y="95"
+        text-anchor="middle"
+        font-family="Arial, Helvetica, sans-serif"
+        font-size="14" fill="#8B2500" letter-spacing="4" font-weight="600">KAPELLEN · EST. 1984</text>
+</svg>
