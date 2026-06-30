@@ -304,11 +304,18 @@ def find_shared_player_groups(team_info_df: pd.DataFrame) -> list[set[str]]:
     if not {"Player 1", "Player 2"}.issubset(team_info_df.columns):
         return []
 
+    def _normalise(name: str) -> str:
+        # Registration data mixes "Firstname Lastname" and "Lastname
+        # Firstname" order across different team rows for the same person
+        # (e.g. "Kohler brenda" vs "Brenda Kohler") — sort the tokens so
+        # both forms collapse to the same key regardless of word order.
+        return " ".join(sorted(name.strip().lower().split()))
+
     teams_by_player: dict[str, set[str]] = {}
     for _, row in team_info_df.iterrows():
         team = str(row["Team"]).strip()
         for col in ("Player 1", "Player 2"):
-            player = str(row.get(col, "") or "").strip().lower()
+            player = _normalise(str(row.get(col, "") or ""))
             if player:
                 teams_by_player.setdefault(player, set()).add(team)
 

@@ -11,9 +11,6 @@
         "name": "De Wachter Pascale & Tack Nicole"
       },
       {
-        "name": "Marleen Smeulders & Ann Van Daele"
-      },
-      {
         "name": "Teysen Kim & Charis Voet"
       },
       {
@@ -21,6 +18,9 @@
       },
       {
         "name": "Van Praag Katleen & Goossens Karen"
+      },
+      {
+        "name": "Wendy Gysen & Ann Van Daele"
       }
     ],
     "DG-1": [
@@ -68,9 +68,6 @@
         "name": "Bram Schyvinck & Ben Joostens"
       },
       {
-        "name": "Timothy Van Daele & André Buytaert"
-      },
-      {
         "name": "Wannes Peferoen & Arthur Peferoen"
       },
       {
@@ -93,7 +90,7 @@
       "poule": "DD",
       "date": "2026-08-07",
       "time": "20:00",
-      "terrain": "T2",
+      "terrain": "T1",
       "team_a": "De Wachter Pascale & Tack Nicole",
       "team_b": "Tine Van Doorslaer & Brenda Kohler"
     },
@@ -107,21 +104,21 @@
       "team_b": "Tine Van Doorslaer & Brenda Kohler"
     },
     {
-      "id": "2026-08-14_20:00_De_Wachter_Pascale_and_Tack_Nicole_Marleen_Smeulders_and_Ann_Van_Daele",
+      "id": "2026-08-14_20:00_De_Wachter_Pascale_and_Tack_Nicole_Wendy_Gysen_and_Ann_Van_Daele",
       "poule": "DD",
       "date": "2026-08-14",
       "time": "20:00",
       "terrain": "T2",
       "team_a": "De Wachter Pascale & Tack Nicole",
-      "team_b": "Marleen Smeulders & Ann Van Daele"
+      "team_b": "Wendy Gysen & Ann Van Daele"
     },
     {
-      "id": "2026-08-21_18:30_Marleen_Smeulders_and_Ann_Van_Daele_Tine_Van_Doorslaer_and_Brenda_Kohler",
+      "id": "2026-08-08_11:30_Wendy_Gysen_and_Ann_Van_Daele_Tine_Van_Doorslaer_and_Brenda_Kohler",
       "poule": "DD",
-      "date": "2026-08-21",
-      "time": "18:30",
-      "terrain": "T2",
-      "team_a": "Marleen Smeulders & Ann Van Daele",
+      "date": "2026-08-08",
+      "time": "11:30",
+      "terrain": "T1",
+      "team_a": "Wendy Gysen & Ann Van Daele",
       "team_b": "Tine Van Doorslaer & Brenda Kohler"
     },
     {
@@ -129,36 +126,36 @@
       "poule": "DD",
       "date": "2026-08-21",
       "time": "20:00",
-      "terrain": "T2",
+      "terrain": "T1",
       "team_a": "Teysen Kim & Charis Voet",
       "team_b": "De Wachter Pascale & Tack Nicole"
     },
     {
-      "id": "2026-08-22_11:30_Teysen_Kim_and_Charis_Voet_Marleen_Smeulders_and_Ann_Van_Daele",
+      "id": "2026-08-22_11:30_Teysen_Kim_and_Charis_Voet_Wendy_Gysen_and_Ann_Van_Daele",
       "poule": "DD",
       "date": "2026-08-22",
       "time": "11:30",
       "terrain": "T1",
       "team_a": "Teysen Kim & Charis Voet",
-      "team_b": "Marleen Smeulders & Ann Van Daele"
+      "team_b": "Wendy Gysen & Ann Van Daele"
     },
     {
       "id": "2026-08-30_17:30_Van_Praag_Katleen_and_Goossens_Karen_De_Wachter_Pascale_and_Tack_Nicole",
       "poule": "DD",
       "date": "2026-08-30",
       "time": "17:30",
-      "terrain": "T1",
+      "terrain": "T4",
       "team_a": "Van Praag Katleen & Goossens Karen",
       "team_b": "De Wachter Pascale & Tack Nicole"
     },
     {
-      "id": "UNSCHEDULED_DD_Van_Praag_Katleen_and_Goossens_Karen_Marleen_Smeulders_and_Ann_Van_Daele",
+      "id": "UNSCHEDULED_DD_Van_Praag_Katleen_and_Goossens_Karen_Wendy_Gysen_and_Ann_Van_Daele",
       "poule": "DD",
       "date": "",
       "time": "",
       "terrain": "",
       "team_a": "Van Praag Katleen & Goossens Karen",
-      "team_b": "Marleen Smeulders & Ann Van Daele"
+      "team_b": "Wendy Gysen & Ann Van Daele"
     },
     {
       "id": "UNSCHEDULED_DD_Van_Praag_Katleen_and_Goossens_Karen_Teysen_Kim_and_Charis_Voet",
@@ -201,7 +198,7 @@
       "poule": "DG-1",
       "date": "2026-07-24",
       "time": "20:00",
-      "terrain": "T2",
+      "terrain": "T1",
       "team_a": "kris boden & Truyken Ossenblok",
       "team_b": "Ben Joosten & Karen Verbiest"
     },
@@ -237,7 +234,7 @@
       "poule": "DG-1",
       "date": "2026-07-31",
       "time": "17:00",
-      "terrain": "T2",
+      "terrain": "T1",
       "team_a": "kris boden & Truyken Ossenblok",
       "team_b": "Peter Denissen & Cleiren Rosemarie"
     },
@@ -260,10 +257,10 @@
       "team_b": "Ben Joosten & Karen Verbiest"
     },
     {
-      "id": "2026-08-14_20:00_Karen_Goossens_and_Kristof_Poulain_kris_boden_and_Truyken_Ossenblok",
+      "id": "2026-07-19_13:00_Karen_Goossens_and_Kristof_Poulain_kris_boden_and_Truyken_Ossenblok",
       "poule": "DG-1",
-      "date": "2026-08-14",
-      "time": "20:00",
+      "date": "2026-07-19",
+      "time": "13:00",
       "terrain": "T1",
       "team_a": "Karen Goossens & Kristof Poulain",
       "team_b": "kris boden & Truyken Ossenblok"
@@ -282,7 +279,7 @@
       "poule": "DG-1",
       "date": "2026-08-22",
       "time": "10:00",
-      "terrain": "T2",
+      "terrain": "T1",
       "team_a": "Tine Van Doorslaer & Wouter spoelders",
       "team_b": "kris boden & Truyken Ossenblok"
     },
@@ -291,7 +288,7 @@
       "poule": "DG-1",
       "date": "2026-08-30",
       "time": "14:30",
-      "terrain": "T2",
+      "terrain": "T4",
       "team_a": "Nande de Jong & Roeland Verberck",
       "team_b": "kris boden & Truyken Ossenblok"
     },
@@ -332,10 +329,10 @@
       "team_b": "Ann Van Daele & Peter Van Wijk"
     },
     {
-      "id": "2026-07-25_11:30_Liesbeth_Clerckx_and_Bert_Segers_Kristof_Luijckx_and_Sofie_Sliggers",
+      "id": "2026-07-25_13:30_Liesbeth_Clerckx_and_Bert_Segers_Kristof_Luijckx_and_Sofie_Sliggers",
       "poule": "DG-2",
       "date": "2026-07-25",
-      "time": "11:30",
+      "time": "13:30",
       "terrain": "T2",
       "team_a": "Liesbeth Clerckx & Bert Segers",
       "team_b": "Kristof Luijckx & Sofie Sliggers"
@@ -363,7 +360,7 @@
       "poule": "DG-2",
       "date": "2026-07-31",
       "time": "18:30",
-      "terrain": "T2",
+      "terrain": "T1",
       "team_a": "Kristof Luijckx & Sofie Sliggers",
       "team_b": "Ann Van Daele & Peter Van Wijk"
     },
@@ -372,7 +369,7 @@
       "poule": "DG-2",
       "date": "2026-08-07",
       "time": "17:00",
-      "terrain": "T2",
+      "terrain": "T1",
       "team_a": "Ann Van Daele & Peter Van Wijk",
       "team_b": "Marleen Boden & Jorg Verhelle"
     },
@@ -386,9 +383,9 @@
       "team_b": "Kohler brenda & Glenn eyer"
     },
     {
-      "id": "2026-08-14_17:00_Kohler_brenda_and_Glenn_eyer_Marleen_Boden_and_Jorg_Verhelle",
+      "id": "2026-07-31_17:00_Kohler_brenda_and_Glenn_eyer_Marleen_Boden_and_Jorg_Verhelle",
       "poule": "DG-2",
-      "date": "2026-08-14",
+      "date": "2026-07-31",
       "time": "17:00",
       "terrain": "T2",
       "team_a": "Kohler brenda & Glenn eyer",
@@ -413,10 +410,10 @@
       "team_b": "Marleen Boden & Jorg Verhelle"
     },
     {
-      "id": "2026-08-21_18:30_Liesbeth_Clerckx_and_Bert_Segers_Kohler_brenda_and_Glenn_eyer",
+      "id": "2026-08-20_19:00_Liesbeth_Clerckx_and_Bert_Segers_Kohler_brenda_and_Glenn_eyer",
       "poule": "DG-2",
-      "date": "2026-08-21",
-      "time": "18:30",
+      "date": "2026-08-20",
+      "time": "19:00",
       "terrain": "T1",
       "team_a": "Liesbeth Clerckx & Bert Segers",
       "team_b": "Kohler brenda & Glenn eyer"
@@ -426,7 +423,7 @@
       "poule": "DG-2",
       "date": "2026-08-22",
       "time": "13:00",
-      "terrain": "T2",
+      "terrain": "T3",
       "team_a": "Liesbeth Clerckx & Bert Segers",
       "team_b": "Marleen Boden & Jorg Verhelle"
     },
@@ -435,7 +432,7 @@
       "poule": "DG-2",
       "date": "2026-08-30",
       "time": "16:00",
-      "terrain": "T1",
+      "terrain": "T4",
       "team_a": "Kristof Luijckx & Sofie Sliggers",
       "team_b": "Demeyer Sylvia & Schonkeren Wilfried"
     },
@@ -444,7 +441,7 @@
       "poule": "DH",
       "date": "2026-07-26",
       "time": "17:30",
-      "terrain": "T2",
+      "terrain": "T1",
       "team_a": "kris boden & peter boden",
       "team_b": "Wannes Peferoen & Arthur Peferoen"
     },
@@ -458,24 +455,6 @@
       "team_b": "Bram Schyvinck & Ben Joostens"
     },
     {
-      "id": "2026-08-01_13:00_Wannes_Peferoen_and_Arthur_Peferoen_Timothy_Van_Daele_and_André_Buytaert",
-      "poule": "DH",
-      "date": "2026-08-01",
-      "time": "13:00",
-      "terrain": "T1",
-      "team_a": "Wannes Peferoen & Arthur Peferoen",
-      "team_b": "Timothy Van Daele & André Buytaert"
-    },
-    {
-      "id": "2026-08-16_10:00_kris_boden_and_peter_boden_Timothy_Van_Daele_and_André_Buytaert",
-      "poule": "DH",
-      "date": "2026-08-16",
-      "time": "10:00",
-      "terrain": "T2",
-      "team_a": "kris boden & peter boden",
-      "team_b": "Timothy Van Daele & André Buytaert"
-    },
-    {
       "id": "2026-08-21_17:00_kris_boden_and_peter_boden_Bram_Schyvinck_and_Ben_Joostens",
       "poule": "DH",
       "date": "2026-08-21",
@@ -483,15 +462,6 @@
       "terrain": "T1",
       "team_a": "kris boden & peter boden",
       "team_b": "Bram Schyvinck & Ben Joostens"
-    },
-    {
-      "id": "2026-08-22_13:00_Bram_Schyvinck_and_Ben_Joostens_Timothy_Van_Daele_and_André_Buytaert",
-      "poule": "DH",
-      "date": "2026-08-22",
-      "time": "13:00",
-      "terrain": "T1",
-      "team_a": "Bram Schyvinck & Ben Joostens",
-      "team_b": "Timothy Van Daele & André Buytaert"
     }
   ],
   "club_name": "TC Kooike",
