@@ -117,7 +117,7 @@
       "poule": "DD",
       "date": "2026-08-08",
       "time": "11:30",
-      "terrain": "T1",
+      "terrain": "T2",
       "team_a": "Wendy Gysen & Ann Van Daele",
       "team_b": "Tine Van Doorslaer & Brenda Kohler"
     },
@@ -261,7 +261,7 @@
       "poule": "DG-1",
       "date": "2026-07-19",
       "time": "13:00",
-      "terrain": "T1",
+      "terrain": "T4",
       "team_a": "Karen Goossens & Kristof Poulain",
       "team_b": "kris boden & Truyken Ossenblok"
     },
@@ -333,7 +333,7 @@
       "poule": "DG-2",
       "date": "2026-07-25",
       "time": "13:30",
-      "terrain": "T2",
+      "terrain": "T3",
       "team_a": "Liesbeth Clerckx & Bert Segers",
       "team_b": "Kristof Luijckx & Sofie Sliggers"
     },
@@ -414,7 +414,7 @@
       "poule": "DG-2",
       "date": "2026-08-20",
       "time": "19:00",
-      "terrain": "T1",
+      "terrain": "?",
       "team_a": "Liesbeth Clerckx & Bert Segers",
       "team_b": "Kohler brenda & Glenn eyer"
     },

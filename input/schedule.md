@@ -10,7 +10,7 @@
 - 07/08/2026 20:00 | T1 | De Wachter Pascale & Tack Nicole | Tine Van Doorslaer & Brenda Kohler
 - 14/08/2026 18:30 | T1 | Van Praag Katleen & Goossens Karen | Tine Van Doorslaer & Brenda Kohler
 - 14/08/2026 20:00 | T2 | De Wachter Pascale & Tack Nicole | Wendy Gysen & Ann Van Daele
-- 08/08/2026 11:30 | T1 | Wendy Gysen & Ann Van Daele | Tine Van Doorslaer & Brenda Kohler
+- 08/08/2026 11:30 | T2 | Wendy Gysen & Ann Van Daele | Tine Van Doorslaer & Brenda Kohler
 - 21/08/2026 20:00 | T1 | Teysen Kim & Charis Voet | De Wachter Pascale & Tack Nicole
 - 22/08/2026 11:30 | T1 | Teysen Kim & Charis Voet | Wendy Gysen & Ann Van Daele
 - 30/08/2026 17:30 | T4 | Van Praag Katleen & Goossens Karen | De Wachter Pascale & Tack Nicole
@@ -28,7 +28,7 @@
 - 31/07/2026 17:00 | T1 | kris boden & Truyken Ossenblok | Peter Denissen & Cleiren Rosemarie
 - 31/07/2026 20:00 | T1 | Karen Goossens & Kristof Poulain | Tine Van Doorslaer & Wouter spoelders
 - 07/08/2026 18:30 | T1 | Karen Goossens & Kristof Poulain | Ben Joosten & Karen Verbiest
-- 19/07/2026 13:00 | T1 | Karen Goossens & Kristof Poulain | kris boden & Truyken Ossenblok
+- 19/07/2026 13:00 | T4 | Karen Goossens & Kristof Poulain | kris boden & Truyken Ossenblok
 - 16/08/2026 10:00 | T1 | Tine Van Doorslaer & Wouter spoelders | Ben Joosten & Karen Verbiest
 - 22/08/2026 10:00 | T1 | Tine Van Doorslaer & Wouter spoelders | kris boden & Truyken Ossenblok
 - 30/08/2026 14:30 | T4 | Nande de Jong & Roeland Verberck | kris boden & Truyken Ossenblok
@@ -38,7 +38,7 @@
 - 17/07/2026 17:00 | T1 | Kohler brenda & Glenn eyer | Ann Van Daele & Peter Van Wijk
 - 24/07/2026 17:00 | T1 | Kristof Luijckx & Sofie Sliggers | Kohler brenda & Glenn eyer
 - 24/07/2026 18:30 | T2 | Demeyer Sylvia & Schonkeren Wilfried | Ann Van Daele & Peter Van Wijk
-- 25/07/2026 13:30 | T2 | Liesbeth Clerckx & Bert Segers | Kristof Luijckx & Sofie Sliggers
+- 25/07/2026 13:30 | T3 | Liesbeth Clerckx & Bert Segers | Kristof Luijckx & Sofie Sliggers
 - 26/07/2026 16:00 | T1 | Liesbeth Clerckx & Bert Segers | Ann Van Daele & Peter Van Wijk
 - 26/07/2026 16:00 | T2 | Demeyer Sylvia & Schonkeren Wilfried | Marleen Boden & Jorg Verhelle
 - 31/07/2026 18:30 | T1 | Kristof Luijckx & Sofie Sliggers | Ann Van Daele & Peter Van Wijk
@@ -47,7 +47,7 @@
 - 31/07/2026 17:00 | T2 | Kohler brenda & Glenn eyer | Marleen Boden & Jorg Verhelle
 - 14/08/2026 18:30 | T2 | Liesbeth Clerckx & Bert Segers | Demeyer Sylvia & Schonkeren Wilfried
 - 21/08/2026 17:00 | T2 | Kristof Luijckx & Sofie Sliggers | Marleen Boden & Jorg Verhelle
-- 20/08/2026 19:00 | T1 | Liesbeth Clerckx & Bert Segers | Kohler brenda & Glenn eyer
+- 20/08/2026 19:00 | ? | Liesbeth Clerckx & Bert Segers | Kohler brenda & Glenn eyer
 - 22/08/2026 13:00 | T3 | Liesbeth Clerckx & Bert Segers | Marleen Boden & Jorg Verhelle
 - 30/08/2026 16:00 | T4 | Kristof Luijckx & Sofie Sliggers | Demeyer Sylvia & Schonkeren Wilfried
 
