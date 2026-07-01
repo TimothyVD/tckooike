@@ -1078,7 +1078,7 @@ function tiebreakRow() {
 }
 function renderResultForm(m) {
   return '<label class="help">Toegangscode</label>' +
-    '<input id="rf-code" class="score-in" style="width:100%;margin-bottom:12px" type="text" maxlength="6" placeholder="bv. AB12CD">' +
+    '<input id="rf-code" class="score-in" style="width:100%;margin-bottom:12px" type="text" maxlength="6" placeholder="Toegangscode">' +
     '<label class="help">Wie heeft gewonnen?</label>' +
     '<div style="margin:6px 0 12px">' +
       '<label style="display:block"><input type="radio" name="rf-winner" value="a"> ' + esc(m.team_a) + '</label>' +
@@ -1181,7 +1181,7 @@ function renderRescheduleForm(m) {
       (m.date ? ('Huidig: ' + esc(fmtDate(m.date)) + ' om ' + esc(m.time)) : 'Nog niet ingepland') +
     '</p>' +
     '<label class="help">Toegangscode (van één van beide teams)</label>' +
-    '<input id="rs-code" class="score-in" style="width:100%;margin-bottom:12px" type="text" maxlength="6" placeholder="bv. AB12CD">' +
+    '<input id="rs-code" class="score-in" style="width:100%;margin-bottom:12px" type="text" maxlength="6" placeholder="Toegangscode">' +
     '<label class="help">Nieuwe datum</label>' +
     '<input id="rs-date" class="score-in" style="width:100%;margin-bottom:4px" type="date" lang="nl-BE">' +
     '<p id="rs-date-preview" class="help" style="margin:0 0 12px"></p>' +
