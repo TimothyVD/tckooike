@@ -59,6 +59,22 @@ drop policy if exists "results_select_anon" on results;
 create policy "results_select_anon" on results for select to anon using (true);
 -- No write policy for anon — all writes go through submit_result() below.
 
+-- ── auth_attempts — brute-force throttle ────────────────
+-- Records failed access-code attempts per match. submit_result() and
+-- reschedule_match() count recent failures for a match and refuse further
+-- tries once a burst threshold is hit, so an attacker can't grind guesses
+-- against a match's two codes. RLS on with no anon policy: only the
+-- SECURITY DEFINER functions (which bypass RLS) ever touch this table.
+create table if not exists auth_attempts (
+  id           bigint generated always as identity primary key,
+  match_id     text not null,
+  attempted_at timestamptz not null default now()
+);
+create index if not exists auth_attempts_match_time on auth_attempts (match_id, attempted_at);
+
+alter table auth_attempts enable row level security;
+-- Deliberately no policies for anon.
+
 -- ── validation helpers ──────────────────────────────────
 -- Mirror isValidSet/isValidTiebreak in site_template.html exactly:
 --   regular set: winner reaches 6 (loser <=4), or 7-5, or 7-6 (tiebreak set)
@@ -110,6 +126,15 @@ begin
     return jsonb_build_object('success', false, 'error', 'Resultaat voor deze wedstrijd werd al doorgegeven.');
   end if;
 
+  -- Brute-force throttle: refuse further tries after several recent failures
+  -- for this match (old rows purged first).
+  delete from auth_attempts where attempted_at < now() - interval '15 minutes';
+  if (select count(*) from auth_attempts
+        where match_id = p_match_id and attempted_at > now() - interval '15 minutes') >= 6 then
+    return jsonb_build_object('success', false,
+      'error', 'Te veel mislukte pogingen voor deze wedstrijd. Probeer het over een kwartier opnieuw.');
+  end if;
+
   -- Scoped to the 2 teams of THIS match only — cheap even with many teams,
   -- since bcrypt verification is deliberately slow per row checked.
   select * into v_team from teams
@@ -117,8 +142,11 @@ begin
      and access_code_hash = crypt(p_access_code, access_code_hash)
    limit 1;
   if v_team.team_name is null then
+    insert into auth_attempts (match_id) values (p_match_id);
     return jsonb_build_object('success', false, 'error', 'Ongeldige toegangscode.');
   end if;
+  -- Valid code: reset this match's failure counter.
+  delete from auth_attempts where match_id = p_match_id;
 
   if not _valid_set(p_set1_w, p_set1_l) then
     return jsonb_build_object('success', false, 'error', 'Set 1 is geen geldige setuitslag.');
@@ -209,6 +237,15 @@ begin
     return jsonb_build_object('success', false, 'error', 'Deze wedstrijd heeft al een resultaat en kan niet meer verzet worden.');
   end if;
 
+  -- Brute-force throttle: refuse further tries after several recent failures
+  -- for this match (old rows purged first).
+  delete from auth_attempts where attempted_at < now() - interval '15 minutes';
+  if (select count(*) from auth_attempts
+        where match_id = p_match_id and attempted_at > now() - interval '15 minutes') >= 6 then
+    return jsonb_build_object('success', false,
+      'error', 'Te veel mislukte pogingen voor deze wedstrijd. Probeer het over een kwartier opnieuw.');
+  end if;
+
   -- Access code must belong to one of the two teams in this match. Scoped to
   -- just those 2 teams so bcrypt is only run twice at most.
   select * into v_team from teams
@@ -216,8 +253,11 @@ begin
      and access_code_hash = crypt(p_access_code, access_code_hash)
    limit 1;
   if v_team.team_name is null then
+    insert into auth_attempts (match_id) values (p_match_id);
     return jsonb_build_object('success', false, 'error', 'Ongeldige toegangscode.');
   end if;
+  -- Valid code: reset this match's failure counter.
+  delete from auth_attempts where match_id = p_match_id;
 
   if p_new_date is null or p_new_time is null or p_new_time !~ '^[0-2][0-9]:[0-5][0-9]$' then
     return jsonb_build_object('success', false, 'error', 'Ongeldige datum of tijd.');
