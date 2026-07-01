@@ -109,20 +109,25 @@ def push_to_supabase(rows: list[dict], schedule: dict) -> None:
         if not r.ok:
             sys.exit(f"Upsert into {table} failed ({r.status_code}): {r.text}")
 
-    # Matches with no date/time yet ("nog te plannen") aren't pushed — there's
-    # no real slot to verify a result against until they're scheduled.
+    # Every match is pushed, including ones with no date/time yet ("nog te
+    # plannen"): teams can schedule those straight from the site via
+    # reschedule_match(), which needs the row present to verify the access code
+    # and to satisfy the reschedules foreign key. Unscheduled matches get a
+    # far-future placeholder slot (the site never shows it — it reads the real
+    # date from schedule.json / the reschedules override, not from here).
+    UNSCHEDULED_DATE = "2099-12-31"
+    UNSCHEDULED_TIME = "00:00"
     matches_payload = [
         {
             "match_id": m["id"],
             "poule": m["poule"],
-            "match_date": m["date"],
-            "match_time": m["time"],
+            "match_date": m["date"] or UNSCHEDULED_DATE,
+            "match_time": m["time"] or UNSCHEDULED_TIME,
             "terrain": m.get("terrain", ""),
             "team_a": m["team_a"],
             "team_b": m["team_b"],
         }
         for m in schedule["matches"]
-        if m.get("date")
     ]
     upsert("matches", matches_payload, "match_id")
     print(f"Upserted {len(matches_payload)} matches.")

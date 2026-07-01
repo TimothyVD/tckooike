@@ -108,6 +108,46 @@ Elke ploeg begint met `## TYPE | Kapitein | Reeks`. Daarna volgen de wedstrijden
 
 ---
 
+### Zomercompetitie (`input/schedule.md`)
+
+Het volledige wedstrijdschema van de zomercompetitie staat in `input/schedule.md`, gegroepeerd per poule. Elke wedstrijd is één `-`-regel:
+
+```
+## DG-2
+- 25/07/2026 13:30 | T3 | Liesbeth Clerckx & Bert Segers | Kristof Luijckx & Sofie Sliggers
+- nog te plannen | Karen Goossens & Kristof Poulain | Peter Denissen & Cleiren Rosemarie
+```
+
+- **Wedstrijdregel**: `DD/MM/YYYY UU:MM | Terrein | Team A | Team B`
+- **Nog geen datum?** Zet `nog te plannen` in plaats van `DD/MM/YYYY UU:MM | Terrein`.
+- Verplaats een wedstrijd door de datum/tijd/terrein op de regel aan te passen.
+
+#### Hoe het schema samenhangt: "plan + wijzigingen"
+
+Het schema heeft **twee lagen**:
+
+1. **Het plan — `input/schedule.md`.** Dit is de bron van waarheid: welke wedstrijden er zijn, welke teams, welke poules, en de oorspronkelijk geplande datums. Alles (de website, de resultatenknop, de toegangscodes) wordt hiervan afgeleid. Dit bestand bewerk je met de hand.
+2. **Live wijzigingen — de databank (Supabase).** Teams kunnen via de website zélf een wedstrijd verzetten (het 📅-icoontje). Zo'n verzetting wordt **niet** in `schedule.md` geschreven, maar apart in de databank bewaard, als een laagje bovenop het plan. De website toont dan **plan + wijzigingen** samen.
+
+> Kort samengevat: `schedule.md` = het plan · de databank = de wijzigingen die teams zelf doorvoeren.
+
+Daardoor blijft `schedule.md` overzichtelijk en in Git bijgehouden, terwijl teams toch zelf kunnen verzetten zonder dat iemand het bestand moet aanpassen.
+
+#### De wijzigingen terug in het plan gieten (optioneel)
+
+Na verloop van tijd verschilt `schedule.md` (het oorspronkelijke plan) van de werkelijkheid (plan + verzettingen). Wil je `schedule.md` weer helemaal kloppend maken, dan zet je de nieuwe datums met de hand in `schedule.md`, en draai je lokaal:
+
+```
+python build_site.py       # herbouwt de site en input/schedule.json
+python sync_results_db.py   # werkt de databank bij
+```
+
+De oude verzettingsregels in de databank worden dan vanzelf opgeruimd (elke wedstrijd krijgt een id op basis van zijn datum, dus een nieuwe datum ⇒ nieuw id ⇒ het oude laagje vervalt). Handmatig opkuisen is niet nodig.
+
+> `input/schedule.md` bevat **geen** persoonsgegevens (enkel namen en wedstrijden). De teamgegevens met telefoonnummers en toegangscodes staan in `input/teams.csv`, dat **niet** in Git zit.
+
+---
+
 ### Tennisschool (`input/school.md`)
 
 Gebruik `## Sectietitel` om secties te scheiden. Daarbinnen gewone tekst, lijsten of tabellen.

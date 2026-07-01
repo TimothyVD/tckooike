@@ -161,3 +161,78 @@ end;
 $$;
 
 grant execute on function submit_result(text, text, text, int, int, int, int, int, int) to anon;
+
+-- ── reschedules — team-initiated match moves ────────────
+-- A live override layer on top of matches. A team can move one of their OWN
+-- matches to a new date/time; match_id stays stable (it still references the
+-- original slot, so an already-submitted result never gets orphaned), only
+-- the date/time shown on the site changes. Terrain is cleared to '?' because
+-- the two teams re-book the court themselves via Tennis & Padel Vlaanderen.
+--
+-- By design there are NO scheduling-conflict checks (terrain capacity, double
+-- bookings, shared players): the teams coordinate the move between themselves.
+-- The only gate is that the access code must belong to one of the two teams.
+create table if not exists reschedules (
+  match_id            text primary key references matches(match_id) on delete cascade,
+  new_date            date not null,
+  new_time            text not null,
+  rescheduled_by_team text not null,
+  rescheduled_at      timestamptz not null default now()
+);
+
+alter table reschedules enable row level security;
+
+drop policy if exists "reschedules_select_anon" on reschedules;
+create policy "reschedules_select_anon" on reschedules for select to anon using (true);
+-- No anon write policy — all writes go through reschedule_match() below.
+
+create or replace function reschedule_match(
+  p_match_id    text,
+  p_access_code text,
+  p_new_date    date,
+  p_new_time    text
+) returns jsonb
+language plpgsql security definer set search_path = public, extensions
+as $$
+declare
+  v_match matches%rowtype;
+  v_team  teams%rowtype;
+begin
+  select * into v_match from matches where match_id = p_match_id;
+  if v_match.match_id is null then
+    return jsonb_build_object('success', false, 'error', 'Wedstrijd niet gevonden.');
+  end if;
+
+  -- A match that already has a result has been played — it can't be moved.
+  -- (This is a data-integrity guard, not a scheduling check.)
+  if exists (select 1 from results where match_id = p_match_id) then
+    return jsonb_build_object('success', false, 'error', 'Deze wedstrijd heeft al een resultaat en kan niet meer verzet worden.');
+  end if;
+
+  -- Access code must belong to one of the two teams in this match. Scoped to
+  -- just those 2 teams so bcrypt is only run twice at most.
+  select * into v_team from teams
+   where team_name in (v_match.team_a, v_match.team_b)
+     and access_code_hash = crypt(p_access_code, access_code_hash)
+   limit 1;
+  if v_team.team_name is null then
+    return jsonb_build_object('success', false, 'error', 'Ongeldige toegangscode.');
+  end if;
+
+  if p_new_date is null or p_new_time is null or p_new_time !~ '^[0-2][0-9]:[0-5][0-9]$' then
+    return jsonb_build_object('success', false, 'error', 'Ongeldige datum of tijd.');
+  end if;
+
+  insert into reschedules (match_id, new_date, new_time, rescheduled_by_team)
+  values (p_match_id, p_new_date, p_new_time, v_team.team_name)
+  on conflict (match_id) do update
+    set new_date            = excluded.new_date,
+        new_time            = excluded.new_time,
+        rescheduled_by_team = excluded.rescheduled_by_team,
+        rescheduled_at      = now();
+
+  return jsonb_build_object('success', true);
+end;
+$$;
+
+grant execute on function reschedule_match(text, text, date, text) to anon;
