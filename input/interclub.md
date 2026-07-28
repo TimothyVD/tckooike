@@ -57,7 +57,7 @@
 - 28/06/2026 14:00 | T.C. KOOIKE | GPH
 - 11/07/2026 14:00 | Oude God | T.C. KOOIKE
 - 21/07/2026 14:00 | Vlug Vooruit | T.C. KOOIKE
-- 25/07/2026 14:00 | T.C. KOOIKE | MTC
+- 23/08/2026 14:00 | T.C. KOOIKE | MTC
 - 01/08/2026 14:00 | Stabroek | T.C. KOOIKE
 - 09/08/2026 14:00 | T.C. KOOIKE | Cantincrode
 - 30/08/2026 14:00 | T.C. KOOIKE | Avia
